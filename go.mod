@@ -1,9 +1,10 @@
-module github.com/glanceapp/glance
+module github.com/limpdev/banter
 
 go 1.24.3
 
 require (
 	github.com/fsnotify/fsnotify v1.9.0
+	github.com/gorilla/websocket v1.5.3
 	github.com/mmcdole/gofeed v1.3.0
 	github.com/shirou/gopsutil/v4 v4.25.4
 	github.com/tidwall/gjson v1.18.0
@@ -17,7 +18,6 @@ require (
 	github.com/andybalholm/cascadia v1.3.3 // indirect
 	github.com/ebitengine/purego v0.8.4 // indirect
 	github.com/go-ole/go-ole v1.3.0 // indirect
-	github.com/gorilla/websocket v1.5.3 // indirect
 	github.com/json-iterator/go v1.1.12 // indirect
 	github.com/lufia/plan9stats v0.0.0-20250317134145-8bc96cf8fc35 // indirect
 	github.com/mmcdole/goxpp v1.1.1 // indirect
