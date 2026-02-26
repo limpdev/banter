@@ -1,50 +1,48 @@
 # yaml-language-server: $schema=https://taskfile.dev/schema.json
 version: "3"
+
 vars:
   # ── Binary name ──────────────────────────────────────────────────────────
-  APP_NAME: "app"
+  APP_NAME: "Banter"
   GOOS:
     sh: go env GOOS
   GOARCH:
     sh: go env GOARCH
-  # Binary extension on Windows
+  # Built-in Go command that returns ".exe" on Windows, and "" on Mac/Linux
   EXT:
-    sh: |
-      if [ "$(go env GOOS)" = "windows" ]; then echo ".exe"; else echo ""; fi
+    sh: go env GOEXE
   BIN_DIR: "./bin"
   DIST_DIR: "./dist"
   BINARY: "{{.BIN_DIR}}/{{.APP_NAME}}{{.EXT}}"
+
   # ── MISC ─────────────────────────────────────────────────────────────────
   PKG_PREFIX: "{{.MODULE}}/internal/version"
   LDFLAGS: >-
     -s -w
     -X '{{.PKG_PREFIX}}.Commit={{.GIT_COMMIT}}'
   GO_CMD: "go"
-  GOFLAGS: ""
-  TEST_FLAGS: "-race -timeout 120s"
-  COVERAGE_OUT: "./coverage.out"
-  COVERAGE_HTML: "./coverage.html"
   MODULE:
     sh: go list -m 2>/dev/null || echo "unknown"
   GIT_COMMIT:
     sh: git rev-parse --short HEAD 2>/dev/null || echo "unknown"
+
   #  CUSTOM VARIABLES
   SUMEXT: "**/*.go,**/*.html,**/*.css,**/*.yml"
   IGNOREXT: ".secrets"
+
 env:
   CGO_ENABLED: "0" # safe default; override per-task if needed
-  GOFLAGS: "{{.GOFLAGS}}"
+
 # ---------------------------------------------------------------------------
 tasks:
-  opts:
+  default:
     desc: "Show available tasks"
     silent: true
     cmds:
       - task --list
+
   build:
     desc: "Build for the current OS/arch ({{.GOOS}}/{{.GOARCH}})"
-    vars:
-      BINARY: "{{.BIN_DIR}}/{{.APP_NAME}}{{.EXT}}"
     cmds:
       - mkdir -p {{.BIN_DIR}}
       - >-
@@ -52,13 +50,14 @@ tasks:
         -trimpath
         -ldflags "{{.LDFLAGS}}"
         -o {{.BINARY}}
-        ./...
+        .
     generates:
       - "{{.BINARY}}"
     sources:
       - "**/*.go"
       - "go.mod"
       - "go.sum"
+
   build:darwin:
     desc: "Cross-compile → darwin/arm64 (Apple Silicon)"
     env:
@@ -72,7 +71,8 @@ tasks:
         -trimpath
         -ldflags "{{.LDFLAGS}}"
         -o {{.DIST_DIR}}/{{.APP_NAME}}-darwin-arm64
-        ./...
+        .
+
   build:windows:
     desc: "Cross-compile → windows/amd64"
     env:
@@ -86,68 +86,21 @@ tasks:
         -trimpath
         -ldflags "{{.LDFLAGS}}"
         -o {{.DIST_DIR}}/{{.APP_NAME}}-windows-amd64.exe
-        ./...
+        .
+
   build:all:
     desc: "Cross-compile for all supported platforms → dist/"
     deps:
       - build:darwin
       - build:windows
     cmds:
-      - echo "✅  All platform binaries written to {{.DIST_DIR}}/"
+      - echo "✅ All platform binaries written to {{.DIST_DIR}}/"
+
   run:
     desc: "Build & run (pass args with -- <args>)"
     deps: [build]
     cmds:
       - "{{.BINARY}} {{.CLI_ARGS}}"
-  vet:
-    desc: "Run go vet"
-    cmds:
-      - "{{.GO_CMD}} vet ./..."
-  lint:
-    desc: "Run golangci-lint (installs if missing)"
-    cmds:
-      - |
-        if ! command -v golangci-lint &>/dev/null; then
-          echo "⬇️  Installing golangci-lint {{.GOLANGCI_VERSION}} …"
-          go install github.com/golangci/golangci-lint/cmd/golangci-lint@{{.GOLANGCI_VERSION}}
-        fi
-      - golangci-lint run ./...
-  lint:fix:
-    desc: "Run golangci-lint with auto-fix"
-    cmds:
-      - golangci-lint run --fix ./...
-  fmt:
-    desc: "Format all Go source files"
-    cmds:
-      - "{{.GO_CMD}} fmt ./..."
-      - |
-        if command -v goimports &>/dev/null; then
-          goimports -w .
-        fi
-  fmt:check:
-    desc: "Check formatting (non-zero exit if changes needed)"
-    cmds:
-      - |
-        unformatted=$(gofmt -l .)
-        if [ -n "$unformatted" ]; then
-          echo "❌  Unformatted files:"
-          echo "$unformatted"
-          exit 1
-        fi
-        echo "✅  All files formatted"
-  tidy:
-    desc: "go mod tidy"
-    cmds:
-      - "{{.GO_CMD}} mod tidy"
-  deps:upgrade:
-    desc: "Upgrade all direct dependencies to latest"
-    cmds:
-      - "{{.GO_CMD}} get -u ./..."
-      - "{{.GO_CMD}} mod tidy"
-  deps:verify:
-    desc: "Verify module checksums"
-    cmds:
-      - "{{.GO_CMD}} mod verify"
 
   # ── CUSTOM ─────────────────────────────────────────────────────────
   sum:

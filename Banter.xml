@@ -48,6 +48,8 @@ The content is organized as follows:
 .github/
 .github/ISSUE_TEMPLATE/
 .github/workflows/
+.task/
+.task/checksum/
 docs/
 docs/images/
 docs/images/themes/
@@ -187,1334 +189,6 @@ taskfile.yml
 <files>
 This section contains the contents of the repository's files.
 
-<file path="internal/glance/templates/change-detection.html">
-{{ template "widget-base.html" . }}
-{{ define "widget-content" }}
-<ul class="list list-gap-14 collapsible-container" data-collapse-after="{{ .CollapseAfter }}">
-    {{ range .ChangeDetections }}
-    <li>
-        <a class="size-h4 block text-truncate color-highlight" href="{{ .URL }}" target="_blank" rel="noreferrer">{{ .Title }}</a>
-        <ul class="list-horizontal-text">
-            <li {{ dynamicRelativeTimeAttrs .LastChanged }}></li>
-            <li class="shrink min-width-0"><a class="visited-indicator" href="{{ .DiffURL }}" target="_blank" rel="noreferrer">diff:{{ .PreviousHash }}</a></li>
-        </ul>
-    </li>
-    {{ else }}
-    <li>No watches configured</li>
-    {{ end}}
-</ul>
-{{ end }}
-</file>
-
-<file path="internal/glance/templates/clock.html">
-{{ template "widget-base.html" . }}
-{{ define "widget-content" }}
-<div class="clock" data-hour-format="{{ .HourFormat }}">
-    <div class="flex justify-between items-center" data-local-time>
-        <div>
-            <div class="color-highlight size-h1" data-date></div>
-            <div data-year></div>
-        </div>
-        <div class="text-right">
-            <div class="clock-time size-h1" data-time></div>
-            <div data-weekday></div>
-        </div>
-    </div>
-    {{ if gt (len .Timezones) 0 }}
-    <hr class="margin-block-10">
-    <ul class="list list-gap-4">
-        {{ range .Timezones }}
-        <li class="flex items-center gap-15" data-time-in-zone="{{ .Timezone }}">
-            <div class="grow min-width-0">
-                <div class="text-truncate">{{ if ne .Label "" }}{{ .Label }}{{ else }}{{ .Timezone }}{{ end }}</div>
-            </div>
-            <div class="color-subdue" data-time-diff></div>
-            <div class="size-h4 clock-time shrink-0 text-right" data-time></div>
-        </li>
-        {{ end }}
-    </ul>
-    {{ end }}
-</div>
-{{ end }}
-</file>
-
-<file path="internal/glance/templates/custom-api.html">
-{{ template "widget-base.html" . }}
-{{ define "widget-content-classes" }}{{ if .Frameless }}widget-content-frameless{{ end }}{{ end }}
-{{ define "widget-content" }}
-{{ .CompiledHTML }}
-{{ end }}
-</file>
-
-<file path="internal/glance/templates/extension.html">
-{{ template "widget-base.html" . }}
-{{ define "widget-content-classes" }}{{ if .Extension.Frameless }}widget-content-frameless{{ end }}{{ end }}
-{{ define "widget-content" }}
-{{ .Extension.Content }}
-{{ end }}
-</file>
-
-<file path="internal/glance/templates/iframe.html">
-{{ template "widget-base.html" . }}
-{{ define "widget-content-classes" }}widget-content-frameless{{ end }}
-{{ define "widget-content" }}
-<iframe src="{{ .Source }}" width="100%" height="{{ .Height }}px" frameborder="0"></iframe>
-{{ end }}
-</file>
-
-<file path="internal/glance/templates/monitor-compact.html">
-{{ template "widget-base.html" . }}
-{{ define "widget-content" }}
-{{ if not (and .ShowFailingOnly (not .HasFailing)) }}
-<ul class="dynamic-columns list-gap-8">
-    {{ range .Sites }}
-    {{ if and $.ShowFailingOnly (eq .StatusStyle "ok" ) }}{{ continue }}{{ end }}
-    <div class="flex items-center gap-12">
-        {{ template "site" . }}
-    </div>
-    {{ end }}
-</ul>
-{{ else }}
-<div class="flex items-center justify-center gap-10 padding-block-5">
-    <p>All sites are online</p>
-    <svg class="shrink-0" style="width: 1.7rem;" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="var(--color-positive)">
-        <path fill-rule="evenodd" d="M2.25 12c0-5.385 4.365-9.75 9.75-9.75s9.75 4.365 9.75 9.75-4.365 9.75-9.75 9.75S2.25 17.385 2.25 12Zm13.36-1.814a.75.75 0 1 0-1.22-.872l-3.236 4.53L9.53 12.22a.75.75 0 0 0-1.06 1.06l2.25 2.25a.75.75 0 0 0 1.14-.094l3.75-5.25Z" clip-rule="evenodd" />
-    </svg>
-</div>
-{{ end }}
-{{ end }}
-{{ define "site" }}
-<a class="size-title-dynamic color-highlight text-truncate block grow" href="{{ .URL | safeURL }}" {{ if not .SameTab }}target="_blank"{{ end }} rel="noreferrer">{{ .Title }}</a>
-{{ if not .Status.TimedOut }}<div>{{ .Status.ResponseTime.Milliseconds | formatNumber }}ms</div>{{ end }}
-{{ if eq .StatusStyle "ok" }}
-<div class="monitor-site-status-icon-compact" title="{{ .Status.Code }}">
-    <svg fill="var(--color-positive)" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20">
-        <path fill-rule="evenodd" d="M10 18a8 8 0 1 0 0-16 8 8 0 0 0 0 16Zm3.857-9.809a.75.75 0 0 0-1.214-.882l-3.483 4.79-1.88-1.88a.75.75 0 1 0-1.06 1.061l2.5 2.5a.75.75 0 0 0 1.137-.089l4-5.5Z" clip-rule="evenodd" />
-    </svg>
-</div>
-{{ else }}
-<div class="monitor-site-status-icon-compact" title="{{ if .Status.Error }}{{ .Status.Error }}{{ else }}{{ .Status.Code }}{{ end }}">
-    <svg fill="var(--color-negative)" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20">
-        <path fill-rule="evenodd" d="M8.485 2.495c.673-1.167 2.357-1.167 3.03 0l6.28 10.875c.673 1.167-.17 2.625-1.516 2.625H3.72c-1.347 0-2.189-1.458-1.515-2.625L8.485 2.495ZM10 5a.75.75 0 0 1 .75.75v3.5a.75.75 0 0 1-1.5 0v-3.5A.75.75 0 0 1 10 5Zm0 9a1 1 0 1 0 0-2 1 1 0 0 0 0 2Z" clip-rule="evenodd" />
-    </svg>
-</div>
-{{ end }}
-{{ end }}
-</file>
-
-<file path="internal/glance/templates/releases.html">
-{{ template "widget-base.html" . }}
-{{ define "widget-content" }}
-<ul class="list list-gap-10 collapsible-container" data-collapse-after="{{ .CollapseAfter }}">
-    {{ range .Releases }}
-    <li>
-        <div class="flex items-center gap-10">
-            <a class="size-h4 block text-truncate color-primary-if-not-visited" href="{{ .NotesUrl }}" target="_blank" rel="noreferrer">{{ .Name }}</a>
-            {{ if $.ShowSourceIcon }}
-            <img class="flat-icon release-source-icon" src="{{ .SourceIconURL }}" alt="" loading="lazy">
-            {{ end }}
-        </div>
-        <ul class="list-horizontal-text">
-            <li {{ dynamicRelativeTimeAttrs .TimeReleased }}></li>
-            <li>{{ .Version }}</li>
-            {{ if gt .Downvotes 3 }}
-            <li>{{ .Downvotes | formatNumber }} ⚠</li>
-            {{ end }}
-        </ul>
-    </li>
-    {{ end }}
-</ul>
-{{ end }}
-</file>
-
-<file path="internal/glance/templates/rss-detailed-list.html">
-{{ template "widget-base.html" . }}
-{{ define "widget-content" }}
-<ul class="list list-gap-24 collapsible-container" data-collapse-after="{{ .CollapseAfter }}">
-    {{ range .Items }}
-    <li class="flex gap-15 items-start row-reverse-on-mobile thumbnail-parent">
-        <div class="thumbnail-container rss-detailed-thumbnail">
-            {{ if ne "" .ImageURL }}
-            <img class="thumbnail" loading="lazy" src="{{ .ImageURL }}" alt="">
-            {{ else }}
-            <svg class="scale-half hide-on-mobile" stroke="var(--color-text-subdue)" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5">
-                <path stroke-linecap="round" stroke-linejoin="round" d="m2.25 15.75 5.159-5.159a2.25 2.25 0 0 1 3.182 0l5.159 5.159m-1.5-1.5 1.409-1.409a2.25 2.25 0 0 1 3.182 0l2.909 2.909m-18 3.75h16.5a1.5 1.5 0 0 0 1.5-1.5V6a1.5 1.5 0 0 0-1.5-1.5H3.75A1.5 1.5 0 0 0 2.25 6v12a1.5 1.5 0 0 0 1.5 1.5Zm10.5-11.25h.008v.008h-.008V8.25Zm.375 0a.375.375 0 1 1-.75 0 .375.375 0 0 1 .75 0Z" />
-            </svg>
-            {{ end }}
-        </div>
-        <div class="grow min-width-0">
-            <a class="size-h3 color-primary-if-not-visited" href="{{ .Link }}" target="_blank" rel="noreferrer">{{ .Title }}</a>
-            <ul class="list-horizontal-text flex-nowrap">
-                <li {{ dynamicRelativeTimeAttrs .PublishedAt }}></li>
-                <li class="min-width-0">
-                    <a class="block text-truncate" href="{{ .ChannelURL }}" target="_blank" rel="noreferrer">{{ .ChannelName }}</a>
-                </li>
-            </ul>
-            {{ if ne "" .Description }}
-            <p class="rss-detailed-description text-truncate-2-lines margin-top-10">{{ .Description }}</p>
-            {{ end }}
-            {{ if gt (len .Categories) 0 }}
-            <ul class="attachments margin-top-10">
-            {{ range .Categories }}
-                <li>{{ . }}</li>
-            {{ end }}
-            </ul>
-            {{ end }}
-        </div>
-    </li>
-    {{ else }}
-    <li>{{ .NoItemsMessage }}</li>
-    {{ end }}
-</ul>
-{{ end }}
-</file>
-
-<file path="internal/glance/templates/rss-horizontal-cards-2.html">
-{{ template "widget-base.html" . }}
-{{ define "widget-content-classes" }}widget-content-frameless{{ end }}
-{{ define "widget-content" }}
-{{ if gt (len .Items) 0 }}
-<div class="carousel-container">
-    <div class="cards-horizontal carousel-items-container"{{ if ne 0.0 .CardHeight }} style="--rss-card-height: {{ .CardHeight }}rem;"{{ end }}>
-        {{ range .Items }}
-        <div class="card rss-card-2 widget-content-frame thumbnail-parent">
-            {{ if ne "" .ImageURL }}
-            <img class="rss-card-2-image thumbnail" loading="lazy" src="{{ .ImageURL }}" alt="">
-            {{ else }}
-            <svg class="rss-card-2-image" style="transform: scale(0.35) translateY(-25%)" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="var(--color-text-subdue)">
-                <path stroke-linecap="round" stroke-linejoin="round" d="m2.25 15.75 5.159-5.159a2.25 2.25 0 0 1 3.182 0l5.159 5.159m-1.5-1.5 1.409-1.409a2.25 2.25 0 0 1 3.182 0l2.909 2.909m-18 3.75h16.5a1.5 1.5 0 0 0 1.5-1.5V6a1.5 1.5 0 0 0-1.5-1.5H3.75A1.5 1.5 0 0 0 2.25 6v12a1.5 1.5 0 0 0 1.5 1.5Zm10.5-11.25h.008v.008h-.008V8.25Zm.375 0a.375.375 0 1 1-.75 0 .375.375 0 0 1 .75 0Z" />
-            </svg>
-            {{ end }}
-            <div class="rss-card-2-content padding-inline-widget">
-                <a href="{{ .Link }}" class="block text-truncate color-primary-if-not-visited" target="_blank" rel="noreferrer">{{ .Title }}</a>
-                <ul class="list-horizontal-text flex-nowrap margin-top-5">
-                    <li class="shrink-0" {{ dynamicRelativeTimeAttrs .PublishedAt }}></li>
-                    <li class="min-width-0 text-truncate">{{ .ChannelName }}</li>
-                </ul>
-            </div>
-        </div>
-        {{ end }}
-    </div>
-</div>
-{{ else }}
-<div class="widget-content-frame padding-widget">{{ .NoItemsMessage }}</div>
-{{ end }}
-{{ end }}
-</file>
-
-<file path="internal/glance/templates/rss-horizontal-cards.html">
-{{ template "widget-base.html" . }}
-{{ define "widget-content-classes" }}widget-content-frameless{{ end }}
-{{ define "widget-content" }}
-{{ if gt (len .Items) 0 }}
-<div class="carousel-container">
-    <div class="cards-horizontal carousel-items-container"{{ if ne 0.0 .ThumbnailHeight }} style="--rss-thumbnail-height: {{ .ThumbnailHeight }}rem;"{{ end }}>
-        {{ range .Items }}
-        <div class="card widget-content-frame thumbnail-parent">
-            {{ if ne "" .ImageURL }}
-            <img class="rss-card-image thumbnail" loading="lazy" src="{{ .ImageURL }}" alt="">
-            {{ else }}
-            <svg class="rss-card-image" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="var(--color-text-subdue)">
-                <path stroke-linecap="round" stroke-linejoin="round" d="m2.25 15.75 5.159-5.159a2.25 2.25 0 0 1 3.182 0l5.159 5.159m-1.5-1.5 1.409-1.409a2.25 2.25 0 0 1 3.182 0l2.909 2.909m-18 3.75h16.5a1.5 1.5 0 0 0 1.5-1.5V6a1.5 1.5 0 0 0-1.5-1.5H3.75A1.5 1.5 0 0 0 2.25 6v12a1.5 1.5 0 0 0 1.5 1.5Zm10.5-11.25h.008v.008h-.008V8.25Zm.375 0a.375.375 0 1 1-.75 0 .375.375 0 0 1 .75 0Z" />
-            </svg>
-            {{ end }}
-            <div class="margin-bottom-widget padding-inline-widget flex flex-column grow">
-                <a href="{{ .Link }}" class="text-truncate-3-lines color-primary-if-not-visited margin-top-10 margin-bottom-auto" target="_blank" rel="noreferrer">{{ .Title }}</a>
-                <ul class="list-horizontal-text flex-nowrap margin-top-7">
-                    <li class="shrink-0" {{ dynamicRelativeTimeAttrs .PublishedAt }}></li>
-                    <li class="min-width-0 text-truncate">{{ .ChannelName }}</li>
-                </ul>
-            </div>
-        </div>
-        {{ end }}
-    </div>
-</div>
-{{ else }}
-<div class="widget-content-frame padding-widget">{{ .NoItemsMessage }}</div>
-{{ end }}
-{{ end }}
-</file>
-
-<file path="internal/glance/templates/rss-list.html">
-{{ template "widget-base.html" . }}
-{{ define "widget-content" }}
-<ul class="list list-gap-14 collapsible-container{{ if .SingleLineTitles }} single-line-titles{{ end }}" data-collapse-after="{{ .CollapseAfter }}">
-    {{ range .Items }}
-    <li>
-        <a class="title size-title-dynamic color-primary-if-not-visited" href="{{ .Link }}" target="_blank" rel="noreferrer">{{ .Title }}</a>
-        <ul class="list-horizontal-text flex-nowrap">
-            <li {{ dynamicRelativeTimeAttrs .PublishedAt }}></li>
-            <li class="min-width-0">
-                <a class="block text-truncate" href="{{ .ChannelURL }}" target="_blank" rel="noreferrer">{{ .ChannelName }}</a>
-            </li>
-        </ul>
-    </li>
-    {{ else }}
-    <li>{{ .NoItemsMessage }}</li>
-    {{ end }}
-</ul>
-{{ end }}
-</file>
-
-<file path="internal/glance/templates/split-column.html">
-{{ template "widget-base.html" . }}
-{{ define "widget-content-classes" }}widget-content-frameless{{ end }}
-{{ define "widget-content" }}
-<div class="masonry" data-max-columns="{{ .MaxColumns }}">
-{{ range .Widgets }}
-    {{ .Render }}
-{{ end }}
-</div>
-{{ end }}
-</file>
-
-<file path="internal/glance/templates/videos-grid.html">
-{{ template "widget-base.html" . }}
-{{ define "widget-content-classes" }}widget-content-frameless{{ end }}
-{{ define "widget-content" }}
-<div class="cards-grid collapsible-container" data-collapse-after-rows="{{ .CollapseAfterRows }}">
-    {{ range .Videos }}
-    <div class="card widget-content-frame thumbnail-parent">
-        {{ template "video-card-contents" . }}
-    </div>
-    {{ end }}
-</div>
-{{ end }}
-</file>
-
-<file path="internal/glance/templates/videos.html">
-{{ template "widget-base.html" . }}
-{{ define "widget-content-classes" }}widget-content-frameless{{ end }}
-{{ define "widget-content" }}
-<div class="carousel-container">
-    <div class="cards-horizontal carousel-items-container">
-        {{ range .Videos }}
-        <div class="card widget-content-frame thumbnail-parent">
-            {{ template "video-card-contents" . }}
-        </div>
-        {{ end }}
-    </div>
-</div>
-{{ end }}
-</file>
-
-<file path="internal/glance/templates/weather.html">
-{{ template "widget-base.html" . }}
-{{ define "widget-content" }}
-<div class="widget-small-content-bounds">
-    <div class="size-h2 color-highlight text-center">{{ .Weather.WeatherCodeAsString }}</div>
-    <div class="size-h4 text-center">Feels like {{ .Weather.ApparentTemperature }}°{{ if eq .Units "metric" }}C{{ else }}F{{ end }}</div>
-    <div class="weather-columns flex margin-top-15 justify-center">
-        {{ range $i, $column := .Weather.Columns }}
-        <div class="weather-column{{ if eq $i $.Weather.CurrentColumn }} weather-column-current{{ end }}">
-            {{ if $column.HasPrecipitation }}
-            <div class="weather-column-rain"></div>
-            {{ end }}
-            {{ if and (ge $i $.Weather.SunriseColumn) (le $i $.Weather.SunsetColumn ) }}
-            <div class="weather-column-daylight{{ if eq $i $.Weather.SunriseColumn }} weather-column-daylight-sunrise{{ else if eq $i $.Weather.SunsetColumn }} weather-column-daylight-sunset{{ end }}"></div>
-            {{ end }}
-            <div class="weather-column-value{{ if lt $column.Temperature 0 }} weather-column-value-negative{{ end }}">{{ $column.Temperature | absInt }}</div>
-            <div class="weather-bar" style='--weather-bar-height: {{ printf "%.2f" $column.Scale }}'></div>
-            <div class="weather-column-time">{{ index $.TimeLabels $i }}</div>
-        </div>
-        {{ end }}
-    </div>
-    {{ if not .HideLocation }}
-    <div class="flex items-center justify-center margin-top-15 gap-7 size-h5">
-        <div class="location-icon"></div>
-        <div class="text-truncate">{{ .Place.Name }},{{ if .ShowAreaName }} {{ .Place.Area }},{{ end }} {{ .Place.Country }}</div>
-    </div>
-    {{ end }}
-</div>
-{{ end }}
-</file>
-
-<file path="internal/glance/widget-changedetection.go">
-package glance
-import (
-	"context"
-	"fmt"
-	"html/template"
-	"log/slog"
-	"net/http"
-	"sort"
-	"strings"
-	"time"
-)
-var changeDetectionWidgetTemplate = mustParseTemplate("change-detection.html", "widget-base.html")
-type changeDetectionWidget struct {
-	widgetBase       `yaml:",inline"`
-	ChangeDetections changeDetectionWatchList `yaml:"-"`
-	WatchUUIDs       []string                 `yaml:"watches"`
-	InstanceURL      string                   `yaml:"instance-url"`
-	Token            string                   `yaml:"token"`
-	Limit            int                      `yaml:"limit"`
-	CollapseAfter    int                      `yaml:"collapse-after"`
-}
-func (widget *changeDetectionWidget) initialize() error {
-	widget.withTitle("Change Detection").withCacheDuration(1 * time.Hour)
-	if widget.Limit <= 0 {
-		widget.Limit = 10
-	}
-	if widget.CollapseAfter == 0 || widget.CollapseAfter < -1 {
-		widget.CollapseAfter = 5
-	}
-	if widget.InstanceURL == "" {
-		widget.InstanceURL = "https://www.changedetection.io"
-	}
-	return nil
-}
-func (widget *changeDetectionWidget) update(ctx context.Context) {
-	if len(widget.WatchUUIDs) == 0 {
-		uuids, err := fetchWatchUUIDsFromChangeDetection(widget.InstanceURL, string(widget.Token))
-		if !widget.canContinueUpdateAfterHandlingErr(err) {
-			return
-		}
-		widget.WatchUUIDs = uuids
-	}
-	watches, err := fetchWatchesFromChangeDetection(widget.InstanceURL, widget.WatchUUIDs, string(widget.Token))
-	if !widget.canContinueUpdateAfterHandlingErr(err) {
-		return
-	}
-	if len(watches) > widget.Limit {
-		watches = watches[:widget.Limit]
-	}
-	widget.ChangeDetections = watches
-}
-func (widget *changeDetectionWidget) Render() template.HTML {
-	return widget.renderTemplate(widget, changeDetectionWidgetTemplate)
-}
-type changeDetectionWatch struct {
-	Title        string
-	URL          string
-	LastChanged  time.Time
-	DiffURL      string
-	PreviousHash string
-}
-type changeDetectionWatchList []changeDetectionWatch
-func (r changeDetectionWatchList) sortByNewest() changeDetectionWatchList {
-	sort.Slice(r, func(i, j int) bool {
-		return r[i].LastChanged.After(r[j].LastChanged)
-	})
-	return r
-}
-type changeDetectionResponseJson struct {
-	Title        string `json:"title"`
-	URL          string `json:"url"`
-	LastChanged  int64  `json:"last_changed"`
-	DateCreated  int64  `json:"date_created"`
-	PreviousHash string `json:"previous_md5"`
-}
-func fetchWatchUUIDsFromChangeDetection(instanceURL string, token string) ([]string, error) {
-	request, _ := http.NewRequest("GET", fmt.Sprintf("%s/api/v1/watch", instanceURL), nil)
-	if token != "" {
-		request.Header.Add("x-api-key", token)
-	}
-	uuidsMap, err := decodeJsonFromRequest[map[string]struct{}](defaultHTTPClient, request)
-	if err != nil {
-		return nil, fmt.Errorf("could not fetch list of watch UUIDs: %v", err)
-	}
-	uuids := make([]string, 0, len(uuidsMap))
-	for uuid := range uuidsMap {
-		uuids = append(uuids, uuid)
-	}
-	return uuids, nil
-}
-func fetchWatchesFromChangeDetection(instanceURL string, requestedWatchIDs []string, token string) (changeDetectionWatchList, error) {
-	watches := make(changeDetectionWatchList, 0, len(requestedWatchIDs))
-	if len(requestedWatchIDs) == 0 {
-		return watches, nil
-	}
-	requests := make([]*http.Request, len(requestedWatchIDs))
-	for i, repository := range requestedWatchIDs {
-		request, _ := http.NewRequest("GET", fmt.Sprintf("%s/api/v1/watch/%s", instanceURL, repository), nil)
-		if token != "" {
-			request.Header.Add("x-api-key", token)
-		}
-		requests[i] = request
-	}
-	task := decodeJsonFromRequestTask[changeDetectionResponseJson](defaultHTTPClient)
-	job := newJob(task, requests).withWorkers(15)
-	responses, errs, err := workerPoolDo(job)
-	if err != nil {
-		return nil, err
-	}
-	var failed int
-	for i := range responses {
-		if errs[i] != nil {
-			failed++
-			slog.Error("Failed to fetch or parse change detection watch", "url", requests[i].URL, "error", errs[i])
-			continue
-		}
-		watchJson := responses[i]
-		watch := changeDetectionWatch{
-			URL:     watchJson.URL,
-			DiffURL: fmt.Sprintf("%s/diff/%s?from_version=%d", instanceURL, requestedWatchIDs[i], watchJson.LastChanged-1),
-		}
-		if watchJson.LastChanged == 0 {
-			watch.LastChanged = time.Unix(watchJson.DateCreated, 0)
-		} else {
-			watch.LastChanged = time.Unix(watchJson.LastChanged, 0)
-		}
-		if watchJson.Title != "" {
-			watch.Title = watchJson.Title
-		} else {
-			watch.Title = strings.TrimPrefix(strings.Trim(stripURLScheme(watchJson.URL), "/"), "www.")
-		}
-		if watchJson.PreviousHash != "" {
-			var hashLength = 8
-			if len(watchJson.PreviousHash) < hashLength {
-				hashLength = len(watchJson.PreviousHash)
-			}
-			watch.PreviousHash = watchJson.PreviousHash[0:hashLength]
-		}
-		watches = append(watches, watch)
-	}
-	if len(watches) == 0 {
-		return nil, errNoContent
-	}
-	watches.sortByNewest()
-	if failed > 0 {
-		return watches, fmt.Errorf("%w: could not get %d watches", errPartialContent, failed)
-	}
-	return watches, nil
-}
-</file>
-
-<file path="internal/glance/widget-clock.go">
-package glance
-import (
-	"errors"
-	"fmt"
-	"html/template"
-	"time"
-)
-var clockWidgetTemplate = mustParseTemplate("clock.html", "widget-base.html")
-type clockWidget struct {
-	widgetBase `yaml:",inline"`
-	cachedHTML template.HTML `yaml:"-"`
-	HourFormat string        `yaml:"hour-format"`
-	Timezones  []struct {
-		Timezone string `yaml:"timezone"`
-		Label    string `yaml:"label"`
-	} `yaml:"timezones"`
-}
-func (widget *clockWidget) initialize() error {
-	widget.withTitle("Clock").withError(nil)
-	if widget.HourFormat == "" {
-		widget.HourFormat = "24h"
-	} else if widget.HourFormat != "12h" && widget.HourFormat != "24h" {
-		return errors.New("hour-format must be either 12h or 24h")
-	}
-	for t := range widget.Timezones {
-		if widget.Timezones[t].Timezone == "" {
-			return errors.New("missing timezone value")
-		}
-		if _, err := time.LoadLocation(widget.Timezones[t].Timezone); err != nil {
-			return fmt.Errorf("invalid timezone '%s': %v", widget.Timezones[t].Timezone, err)
-		}
-	}
-	widget.cachedHTML = widget.renderTemplate(widget, clockWidgetTemplate)
-	return nil
-}
-func (widget *clockWidget) Render() template.HTML {
-	return widget.cachedHTML
-}
-</file>
-
-<file path="internal/glance/widget-container.go">
-package glance
-import (
-	"context"
-	"sync"
-	"time"
-)
-type containerWidgetBase struct {
-	Widgets widgets `yaml:"widgets"`
-}
-func (widget *containerWidgetBase) _initializeWidgets() error {
-	for i := range widget.Widgets {
-		if err := widget.Widgets[i].initialize(); err != nil {
-			return formatWidgetInitError(err, widget.Widgets[i])
-		}
-	}
-	return nil
-}
-func (widget *containerWidgetBase) _update(ctx context.Context) {
-	var wg sync.WaitGroup
-	now := time.Now()
-	for w := range widget.Widgets {
-		widget := widget.Widgets[w]
-		if !widget.requiresUpdate(&now) {
-			continue
-		}
-		wg.Add(1)
-		go func() {
-			defer wg.Done()
-			widget.update(ctx)
-		}()
-	}
-	wg.Wait()
-}
-func (widget *containerWidgetBase) _setProviders(providers *widgetProviders) {
-	for i := range widget.Widgets {
-		widget.Widgets[i].setProviders(providers)
-	}
-}
-func (widget *containerWidgetBase) _requiresUpdate(now *time.Time) bool {
-	for i := range widget.Widgets {
-		if widget.Widgets[i].requiresUpdate(now) {
-			return true
-		}
-	}
-	return false
-}
-</file>
-
-<file path="internal/glance/widget-group.go">
-package glance
-import (
-	"context"
-	"errors"
-	"html/template"
-	"time"
-)
-var groupWidgetTemplate = mustParseTemplate("group.html", "widget-base.html")
-type groupWidget struct {
-	widgetBase          `yaml:",inline"`
-	containerWidgetBase `yaml:",inline"`
-}
-func (widget *groupWidget) initialize() error {
-	widget.withError(nil)
-	widget.HideHeader = true
-	for i := range widget.Widgets {
-		widget.Widgets[i].setHideHeader(true)
-		if widget.Widgets[i].GetType() == "group" {
-			return errors.New("nested groups are not supported")
-		} else if widget.Widgets[i].GetType() == "split-column" {
-			return errors.New("split columns inside of groups are not supported")
-		}
-	}
-	if err := widget.containerWidgetBase._initializeWidgets(); err != nil {
-		return err
-	}
-	return nil
-}
-func (widget *groupWidget) update(ctx context.Context) {
-	widget.containerWidgetBase._update(ctx)
-}
-func (widget *groupWidget) setProviders(providers *widgetProviders) {
-	widget.containerWidgetBase._setProviders(providers)
-}
-func (widget *groupWidget) requiresUpdate(now *time.Time) bool {
-	return widget.containerWidgetBase._requiresUpdate(now)
-}
-func (widget *groupWidget) Render() template.HTML {
-	return widget.renderTemplate(widget, groupWidgetTemplate)
-}
-</file>
-
-<file path="internal/glance/widget-hacker-news.go">
-package glance
-import (
-	"context"
-	"fmt"
-	"html/template"
-	"log/slog"
-	"net/http"
-	"strconv"
-	"strings"
-	"time"
-)
-type hackerNewsWidget struct {
-	widgetBase          `yaml:",inline"`
-	Posts               forumPostList `yaml:"-"`
-	Limit               int           `yaml:"limit"`
-	SortBy              string        `yaml:"sort-by"`
-	ExtraSortBy         string        `yaml:"extra-sort-by"`
-	CollapseAfter       int           `yaml:"collapse-after"`
-	CommentsUrlTemplate string        `yaml:"comments-url-template"`
-	ShowThumbnails      bool          `yaml:"-"`
-}
-func (widget *hackerNewsWidget) initialize() error {
-	widget.
-		withTitle("Hacker News").
-		withTitleURL("https://news.ycombinator.com/").
-		withCacheDuration(30 * time.Minute)
-	if widget.Limit <= 0 {
-		widget.Limit = 15
-	}
-	if widget.CollapseAfter == 0 || widget.CollapseAfter < -1 {
-		widget.CollapseAfter = 5
-	}
-	if widget.SortBy != "top" && widget.SortBy != "new" && widget.SortBy != "best" {
-		widget.SortBy = "top"
-	}
-	return nil
-}
-func (widget *hackerNewsWidget) update(ctx context.Context) {
-	posts, err := fetchHackerNewsPosts(widget.SortBy, 40, widget.CommentsUrlTemplate)
-	if !widget.canContinueUpdateAfterHandlingErr(err) {
-		return
-	}
-	if widget.ExtraSortBy == "engagement" {
-		posts.calculateEngagement()
-		posts.sortByEngagement()
-	}
-	if widget.Limit < len(posts) {
-		posts = posts[:widget.Limit]
-	}
-	widget.Posts = posts
-}
-func (widget *hackerNewsWidget) Render() template.HTML {
-	return widget.renderTemplate(widget, forumPostsTemplate)
-}
-type hackerNewsPostResponseJson struct {
-	Id           int    `json:"id"`
-	Score        int    `json:"score"`
-	Title        string `json:"title"`
-	TargetUrl    string `json:"url,omitempty"`
-	CommentCount int    `json:"descendants"`
-	TimePosted   int64  `json:"time"`
-}
-func fetchHackerNewsPostIds(sort string) ([]int, error) {
-	request, _ := http.NewRequest("GET", fmt.Sprintf("https://hacker-news.firebaseio.com/v0/%sstories.json", sort), nil)
-	response, err := decodeJsonFromRequest[[]int](defaultHTTPClient, request)
-	if err != nil {
-		return nil, fmt.Errorf("%w: could not fetch list of post IDs", errNoContent)
-	}
-	return response, nil
-}
-func fetchHackerNewsPostsFromIds(postIds []int, commentsUrlTemplate string) (forumPostList, error) {
-	requests := make([]*http.Request, len(postIds))
-	for i, id := range postIds {
-		request, _ := http.NewRequest("GET", fmt.Sprintf("https://hacker-news.firebaseio.com/v0/item/%d.json", id), nil)
-		requests[i] = request
-	}
-	task := decodeJsonFromRequestTask[hackerNewsPostResponseJson](defaultHTTPClient)
-	job := newJob(task, requests).withWorkers(30)
-	results, errs, err := workerPoolDo(job)
-	if err != nil {
-		return nil, err
-	}
-	posts := make(forumPostList, 0, len(postIds))
-	for i := range results {
-		if errs[i] != nil {
-			slog.Error("Failed to fetch or parse hacker news post", "error", errs[i], "url", requests[i].URL)
-			continue
-		}
-		var commentsUrl string
-		if commentsUrlTemplate == "" {
-			commentsUrl = "https://news.ycombinator.com/item?id=" + strconv.Itoa(results[i].Id)
-		} else {
-			commentsUrl = strings.ReplaceAll(commentsUrlTemplate, "{POST-ID}", strconv.Itoa(results[i].Id))
-		}
-		posts = append(posts, forumPost{
-			Title:           results[i].Title,
-			DiscussionUrl:   commentsUrl,
-			TargetUrl:       results[i].TargetUrl,
-			TargetUrlDomain: extractDomainFromUrl(results[i].TargetUrl),
-			CommentCount:    results[i].CommentCount,
-			Score:           results[i].Score,
-			TimePosted:      time.Unix(results[i].TimePosted, 0),
-		})
-	}
-	if len(posts) == 0 {
-		return nil, errNoContent
-	}
-	if len(posts) != len(postIds) {
-		return posts, fmt.Errorf("%w could not fetch some hacker news posts", errPartialContent)
-	}
-	return posts, nil
-}
-func fetchHackerNewsPosts(sort string, limit int, commentsUrlTemplate string) (forumPostList, error) {
-	postIds, err := fetchHackerNewsPostIds(sort)
-	if err != nil {
-		return nil, err
-	}
-	if len(postIds) > limit {
-		postIds = postIds[:limit]
-	}
-	return fetchHackerNewsPostsFromIds(postIds, commentsUrlTemplate)
-}
-</file>
-
-<file path="internal/glance/widget-html.go">
-package glance
-import (
-	"html/template"
-)
-type htmlWidget struct {
-	widgetBase `yaml:",inline"`
-	Source     template.HTML `yaml:"source"`
-}
-func (widget *htmlWidget) initialize() error {
-	widget.withTitle("").withError(nil)
-	return nil
-}
-func (widget *htmlWidget) Render() template.HTML {
-	return widget.Source
-}
-</file>
-
-<file path="internal/glance/widget-iframe.go">
-package glance
-import (
-	"errors"
-	"fmt"
-	"html/template"
-	"net/url"
-)
-var iframeWidgetTemplate = mustParseTemplate("iframe.html", "widget-base.html")
-type iframeWidget struct {
-	widgetBase `yaml:",inline"`
-	cachedHTML template.HTML `yaml:"-"`
-	Source     string        `yaml:"source"`
-	Height     int           `yaml:"height"`
-}
-func (widget *iframeWidget) initialize() error {
-	widget.withTitle("IFrame").withError(nil)
-	if widget.Source == "" {
-		return errors.New("source is required")
-	}
-	if _, err := url.Parse(widget.Source); err != nil {
-		return fmt.Errorf("parsing URL: %v", err)
-	}
-	if widget.Height == 50 {
-		widget.Height = 300
-	} else if widget.Height < 50 {
-		widget.Height = 50
-	}
-	widget.cachedHTML = widget.renderTemplate(widget, iframeWidgetTemplate)
-	return nil
-}
-func (widget *iframeWidget) Render() template.HTML {
-	return widget.cachedHTML
-}
-</file>
-
-<file path="internal/glance/widget-lobsters.go">
-package glance
-import (
-	"context"
-	"html/template"
-	"net/http"
-	"strings"
-	"time"
-)
-type lobstersWidget struct {
-	widgetBase     `yaml:",inline"`
-	Posts          forumPostList `yaml:"-"`
-	InstanceURL    string        `yaml:"instance-url"`
-	CustomURL      string        `yaml:"custom-url"`
-	Limit          int           `yaml:"limit"`
-	CollapseAfter  int           `yaml:"collapse-after"`
-	SortBy         string        `yaml:"sort-by"`
-	Tags           []string      `yaml:"tags"`
-	ShowThumbnails bool          `yaml:"-"`
-}
-func (widget *lobstersWidget) initialize() error {
-	widget.withTitle("Lobsters").withCacheDuration(time.Hour)
-	if widget.InstanceURL == "" {
-		widget.withTitleURL("https://lobste.rs")
-	} else {
-		widget.withTitleURL(widget.InstanceURL)
-	}
-	if widget.SortBy == "" || (widget.SortBy != "hot" && widget.SortBy != "new") {
-		widget.SortBy = "hot"
-	}
-	if widget.Limit <= 0 {
-		widget.Limit = 15
-	}
-	if widget.CollapseAfter == 0 || widget.CollapseAfter < -1 {
-		widget.CollapseAfter = 5
-	}
-	return nil
-}
-func (widget *lobstersWidget) update(ctx context.Context) {
-	posts, err := fetchLobstersPosts(widget.CustomURL, widget.InstanceURL, widget.SortBy, widget.Tags)
-	if !widget.canContinueUpdateAfterHandlingErr(err) {
-		return
-	}
-	if widget.Limit < len(posts) {
-		posts = posts[:widget.Limit]
-	}
-	widget.Posts = posts
-}
-func (widget *lobstersWidget) Render() template.HTML {
-	return widget.renderTemplate(widget, forumPostsTemplate)
-}
-type lobstersPostResponseJson struct {
-	CreatedAt    string   `json:"created_at"`
-	Title        string   `json:"title"`
-	URL          string   `json:"url"`
-	Score        int      `json:"score"`
-	CommentCount int      `json:"comment_count"`
-	CommentsURL  string   `json:"comments_url"`
-	Tags         []string `json:"tags"`
-}
-type lobstersFeedResponseJson []lobstersPostResponseJson
-func fetchLobstersPostsFromFeed(feedUrl string) (forumPostList, error) {
-	request, err := http.NewRequest("GET", feedUrl, nil)
-	if err != nil {
-		return nil, err
-	}
-	feed, err := decodeJsonFromRequest[lobstersFeedResponseJson](defaultHTTPClient, request)
-	if err != nil {
-		return nil, err
-	}
-	posts := make(forumPostList, 0, len(feed))
-	for i := range feed {
-		createdAt, _ := time.Parse(time.RFC3339, feed[i].CreatedAt)
-		posts = append(posts, forumPost{
-			Title:           feed[i].Title,
-			DiscussionUrl:   feed[i].CommentsURL,
-			TargetUrl:       feed[i].URL,
-			TargetUrlDomain: extractDomainFromUrl(feed[i].URL),
-			CommentCount:    feed[i].CommentCount,
-			Score:           feed[i].Score,
-			TimePosted:      createdAt,
-			Tags:            feed[i].Tags,
-		})
-	}
-	if len(posts) == 0 {
-		return nil, errNoContent
-	}
-	return posts, nil
-}
-func fetchLobstersPosts(customURL string, instanceURL string, sortBy string, tags []string) (forumPostList, error) {
-	var feedUrl string
-	if customURL != "" {
-		feedUrl = customURL
-	} else {
-		if instanceURL != "" {
-			instanceURL = strings.TrimRight(instanceURL, "/") + "/"
-		} else {
-			instanceURL = "https://lobste.rs/"
-		}
-		if sortBy == "hot" {
-			sortBy = "hottest"
-		} else if sortBy == "new" {
-			sortBy = "newest"
-		}
-		if len(tags) == 0 {
-			feedUrl = instanceURL + sortBy + ".json"
-		} else {
-			tags := strings.Join(tags, ",")
-			feedUrl = instanceURL + "t/" + tags + ".json"
-		}
-	}
-	posts, err := fetchLobstersPostsFromFeed(feedUrl)
-	if err != nil {
-		return nil, err
-	}
-	return posts, nil
-}
-</file>
-
-<file path="internal/glance/widget-repository.go">
-package glance
-import (
-	"context"
-	"fmt"
-	"html/template"
-	"net/http"
-	"strings"
-	"sync"
-	"time"
-)
-var repositoryWidgetTemplate = mustParseTemplate("repository.html", "widget-base.html")
-type repositoryWidget struct {
-	widgetBase          `yaml:",inline"`
-	RequestedRepository string     `yaml:"repository"`
-	Token               string     `yaml:"token"`
-	PullRequestsLimit   int        `yaml:"pull-requests-limit"`
-	IssuesLimit         int        `yaml:"issues-limit"`
-	CommitsLimit        int        `yaml:"commits-limit"`
-	Repository          repository `yaml:"-"`
-}
-func (widget *repositoryWidget) initialize() error {
-	widget.withTitle("Repository").withCacheDuration(1 * time.Hour)
-	if widget.PullRequestsLimit == 0 || widget.PullRequestsLimit < -1 {
-		widget.PullRequestsLimit = 3
-	}
-	if widget.IssuesLimit == 0 || widget.IssuesLimit < -1 {
-		widget.IssuesLimit = 3
-	}
-	if widget.CommitsLimit == 0 || widget.CommitsLimit < -1 {
-		widget.CommitsLimit = -1
-	}
-	return nil
-}
-func (widget *repositoryWidget) update(ctx context.Context) {
-	details, err := fetchRepositoryDetailsFromGithub(
-		widget.RequestedRepository,
-		string(widget.Token),
-		widget.PullRequestsLimit,
-		widget.IssuesLimit,
-		widget.CommitsLimit,
-	)
-	if !widget.canContinueUpdateAfterHandlingErr(err) {
-		return
-	}
-	widget.Repository = details
-}
-func (widget *repositoryWidget) Render() template.HTML {
-	return widget.renderTemplate(widget, repositoryWidgetTemplate)
-}
-type repository struct {
-	Name             string
-	Stars            int
-	Forks            int
-	OpenPullRequests int
-	PullRequests     []githubTicket
-	OpenIssues       int
-	Issues           []githubTicket
-	LastCommits      int
-	Commits          []githubCommitDetails
-}
-type githubTicket struct {
-	Number    int
-	CreatedAt time.Time
-	Title     string
-}
-type githubCommitDetails struct {
-	Sha       string
-	Author    string
-	CreatedAt time.Time
-	Message   string
-}
-type githubRepositoryResponseJson struct {
-	Name  string `json:"full_name"`
-	Stars int    `json:"stargazers_count"`
-	Forks int    `json:"forks_count"`
-}
-type githubTicketResponseJson struct {
-	Count   int `json:"total_count"`
-	Tickets []struct {
-		Number    int    `json:"number"`
-		CreatedAt string `json:"created_at"`
-		Title     string `json:"title"`
-	} `json:"items"`
-}
-type gitHubCommitResponseJson struct {
-	Sha    string `json:"sha"`
-	Commit struct {
-		Author struct {
-			Name string `json:"name"`
-			Date string `json:"date"`
-		} `json:"author"`
-		Message string `json:"message"`
-	} `json:"commit"`
-}
-func fetchRepositoryDetailsFromGithub(repo string, token string, maxPRs int, maxIssues int, maxCommits int) (repository, error) {
-	repositoryRequest, err := http.NewRequest("GET", fmt.Sprintf("https://api.github.com/repos/%s", repo), nil)
-	if err != nil {
-		return repository{}, fmt.Errorf("%w: could not create request with repository: %v", errNoContent, err)
-	}
-	PRsRequest, _ := http.NewRequest("GET", fmt.Sprintf("https://api.github.com/search/issues?q=is:pr+is:open+repo:%s&per_page=%d", repo, maxPRs), nil)
-	issuesRequest, _ := http.NewRequest("GET", fmt.Sprintf("https://api.github.com/search/issues?q=is:issue+is:open+repo:%s&per_page=%d", repo, maxIssues), nil)
-	CommitsRequest, _ := http.NewRequest("GET", fmt.Sprintf("https://api.github.com/repos/%s/commits?per_page=%d", repo, maxCommits), nil)
-	if token != "" {
-		token = fmt.Sprintf("Bearer %s", token)
-		repositoryRequest.Header.Add("Authorization", token)
-		PRsRequest.Header.Add("Authorization", token)
-		issuesRequest.Header.Add("Authorization", token)
-		CommitsRequest.Header.Add("Authorization", token)
-	}
-	var repositoryResponse githubRepositoryResponseJson
-	var detailsErr error
-	var PRsResponse githubTicketResponseJson
-	var PRsErr error
-	var issuesResponse githubTicketResponseJson
-	var issuesErr error
-	var commitsResponse []gitHubCommitResponseJson
-	var CommitsErr error
-	var wg sync.WaitGroup
-	wg.Add(1)
-	go (func() {
-		defer wg.Done()
-		repositoryResponse, detailsErr = decodeJsonFromRequest[githubRepositoryResponseJson](defaultHTTPClient, repositoryRequest)
-	})()
-	if maxPRs > 0 {
-		wg.Add(1)
-		go (func() {
-			defer wg.Done()
-			PRsResponse, PRsErr = decodeJsonFromRequest[githubTicketResponseJson](defaultHTTPClient, PRsRequest)
-		})()
-	}
-	if maxIssues > 0 {
-		wg.Add(1)
-		go (func() {
-			defer wg.Done()
-			issuesResponse, issuesErr = decodeJsonFromRequest[githubTicketResponseJson](defaultHTTPClient, issuesRequest)
-		})()
-	}
-	if maxCommits > 0 {
-		wg.Add(1)
-		go (func() {
-			defer wg.Done()
-			commitsResponse, CommitsErr = decodeJsonFromRequest[[]gitHubCommitResponseJson](defaultHTTPClient, CommitsRequest)
-		})()
-	}
-	wg.Wait()
-	if detailsErr != nil {
-		return repository{}, fmt.Errorf("%w: could not get repository details: %s", errNoContent, detailsErr)
-	}
-	details := repository{
-		Name:         repositoryResponse.Name,
-		Stars:        repositoryResponse.Stars,
-		Forks:        repositoryResponse.Forks,
-		PullRequests: make([]githubTicket, 0, len(PRsResponse.Tickets)),
-		Issues:       make([]githubTicket, 0, len(issuesResponse.Tickets)),
-		Commits:      make([]githubCommitDetails, 0, len(commitsResponse)),
-	}
-	err = nil
-	if maxPRs > 0 {
-		if PRsErr != nil {
-			err = fmt.Errorf("%w: could not get PRs: %s", errPartialContent, PRsErr)
-		} else {
-			details.OpenPullRequests = PRsResponse.Count
-			for i := range PRsResponse.Tickets {
-				details.PullRequests = append(details.PullRequests, githubTicket{
-					Number:    PRsResponse.Tickets[i].Number,
-					CreatedAt: parseRFC3339Time(PRsResponse.Tickets[i].CreatedAt),
-					Title:     PRsResponse.Tickets[i].Title,
-				})
-			}
-		}
-	}
-	if maxIssues > 0 {
-		if issuesErr != nil {
-			// TODO: fix, overwriting the previous error
-			err = fmt.Errorf("%w: could not get issues: %s", errPartialContent, issuesErr)
-		} else {
-			details.OpenIssues = issuesResponse.Count
-			for i := range issuesResponse.Tickets {
-				details.Issues = append(details.Issues, githubTicket{
-					Number:    issuesResponse.Tickets[i].Number,
-					CreatedAt: parseRFC3339Time(issuesResponse.Tickets[i].CreatedAt),
-					Title:     issuesResponse.Tickets[i].Title,
-				})
-			}
-		}
-	}
-	if maxCommits > 0 {
-		if CommitsErr != nil {
-			err = fmt.Errorf("%w: could not get commits: %s", errPartialContent, CommitsErr)
-		} else {
-			for i := range commitsResponse {
-				details.Commits = append(details.Commits, githubCommitDetails{
-					Sha:       commitsResponse[i].Sha,
-					Author:    commitsResponse[i].Commit.Author.Name,
-					CreatedAt: parseRFC3339Time(commitsResponse[i].Commit.Author.Date),
-					Message:   strings.SplitN(commitsResponse[i].Commit.Message, "\n\n", 2)[0],
-				})
-			}
-		}
-	}
-	return details, err
-}
-</file>
-
-<file path="internal/glance/widget-shared.go">
-package glance
-import (
-	"math"
-	"sort"
-	"time"
-)
-const twitchGqlEndpoint = "https://gql.twitch.tv/gql"
-const twitchGqlClientId = "kimne78kx3ncx6brgo4mv6wki5h1ko"
-var forumPostsTemplate = mustParseTemplate("forum-posts.html", "widget-base.html")
-type forumPost struct {
-	Title           string
-	DiscussionUrl   string
-	TargetUrl       string
-	TargetUrlDomain string
-	ThumbnailUrl    string
-	CommentCount    int
-	Score           int
-	Engagement      float64
-	TimePosted      time.Time
-	Tags            []string
-	IsCrosspost     bool
-}
-type forumPostList []forumPost
-const depreciatePostsOlderThanHours = 7
-const maxDepreciation = 0.9
-const maxDepreciationAfterHours = 24
-func (p forumPostList) calculateEngagement() {
-	var totalComments int
-	var totalScore int
-	for i := range p {
-		totalComments += p[i].CommentCount
-		totalScore += p[i].Score
-	}
-	numberOfPosts := float64(len(p))
-	averageComments := float64(totalComments) / numberOfPosts
-	averageScore := float64(totalScore) / numberOfPosts
-	for i := range p {
-		p[i].Engagement = (float64(p[i].CommentCount)/averageComments + float64(p[i].Score)/averageScore) / 2
-		elapsed := time.Since(p[i].TimePosted)
-		if elapsed < time.Hour*depreciatePostsOlderThanHours {
-			continue
-		}
-		p[i].Engagement *= 1.0 - (math.Max(elapsed.Hours()-depreciatePostsOlderThanHours, maxDepreciationAfterHours)/maxDepreciationAfterHours)*maxDepreciation
-	}
-}
-func (p forumPostList) sortByEngagement() {
-	sort.Slice(p, func(i, j int) bool {
-		return p[i].Engagement > p[j].Engagement
-	})
-}
-</file>
-
-<file path="internal/glance/widget-split-column.go">
-package glance
-import (
-	"context"
-	"html/template"
-	"time"
-)
-var splitColumnWidgetTemplate = mustParseTemplate("split-column.html", "widget-base.html")
-type splitColumnWidget struct {
-	widgetBase          `yaml:",inline"`
-	containerWidgetBase `yaml:",inline"`
-	MaxColumns          int `yaml:"max-columns"`
-}
-func (widget *splitColumnWidget) initialize() error {
-	widget.withError(nil).withTitle("Split Column").setHideHeader(true)
-	if err := widget.containerWidgetBase._initializeWidgets(); err != nil {
-		return err
-	}
-	if widget.MaxColumns < 2 {
-		widget.MaxColumns = 2
-	}
-	return nil
-}
-func (widget *splitColumnWidget) update(ctx context.Context) {
-	widget.containerWidgetBase._update(ctx)
-}
-func (widget *splitColumnWidget) setProviders(providers *widgetProviders) {
-	widget.containerWidgetBase._setProviders(providers)
-}
-func (widget *splitColumnWidget) requiresUpdate(now *time.Time) bool {
-	return widget.containerWidgetBase._requiresUpdate(now)
-}
-func (widget *splitColumnWidget) Render() template.HTML {
-	return widget.renderTemplate(widget, splitColumnWidgetTemplate)
-}
-</file>
-
-<file path="internal/glance/widget-twitch-top-games.go">
-package glance
-import (
-	"context"
-	"errors"
-	"fmt"
-	"html/template"
-	"net/http"
-	"slices"
-	"strings"
-	"time"
-)
-var twitchGamesWidgetTemplate = mustParseTemplate("twitch-games-list.html", "widget-base.html")
-type twitchGamesWidget struct {
-	widgetBase    `yaml:",inline"`
-	Categories    []twitchCategory `yaml:"-"`
-	Exclude       []string         `yaml:"exclude"`
-	Limit         int              `yaml:"limit"`
-	CollapseAfter int              `yaml:"collapse-after"`
-}
-func (widget *twitchGamesWidget) initialize() error {
-	widget.
-		withTitle("Top games on Twitch").
-		withTitleURL("https://www.twitch.tv/directory?sort=VIEWER_COUNT").
-		withCacheDuration(time.Minute * 10)
-	if widget.Limit <= 0 {
-		widget.Limit = 10
-	}
-	if widget.CollapseAfter == 0 || widget.CollapseAfter < -1 {
-		widget.CollapseAfter = 5
-	}
-	return nil
-}
-func (widget *twitchGamesWidget) update(ctx context.Context) {
-	categories, err := fetchTopGamesFromTwitch(widget.Exclude, widget.Limit)
-	if !widget.canContinueUpdateAfterHandlingErr(err) {
-		return
-	}
-	widget.Categories = categories
-}
-func (widget *twitchGamesWidget) Render() template.HTML {
-	return widget.renderTemplate(widget, twitchGamesWidgetTemplate)
-}
-type twitchCategory struct {
-	Slug         string `json:"slug"`
-	Name         string `json:"name"`
-	AvatarUrl    string `json:"avatarURL"`
-	ViewersCount int    `json:"viewersCount"`
-	Tags         []struct {
-		Name string `json:"tagName"`
-	} `json:"tags"`
-	GameReleaseDate string `json:"originalReleaseDate"`
-	IsNew           bool   `json:"-"`
-}
-type twitchDirectoriesOperationResponse struct {
-	Data struct {
-		DirectoriesWithTags struct {
-			Edges []struct {
-				Node twitchCategory `json:"node"`
-			} `json:"edges"`
-		} `json:"directoriesWithTags"`
-	} `json:"data"`
-}
-const twitchDirectoriesOperationRequestBody = `[
-{"operationName": "BrowsePage_AllDirectories","variables": {"limit": %d,"options": {"sort": "VIEWER_COUNT","tags": []}},"extensions": {"persistedQuery": {"version": 1,"sha256Hash": "2f67f71ba89f3c0ed26a141ec00da1defecb2303595f5cda4298169549783d9e"}}}
-]`
-func fetchTopGamesFromTwitch(exclude []string, limit int) ([]twitchCategory, error) {
-	reader := strings.NewReader(fmt.Sprintf(twitchDirectoriesOperationRequestBody, len(exclude)+limit))
-	request, _ := http.NewRequest("POST", twitchGqlEndpoint, reader)
-	request.Header.Add("Client-ID", twitchGqlClientId)
-	response, err := decodeJsonFromRequest[[]twitchDirectoriesOperationResponse](defaultHTTPClient, request)
-	if err != nil {
-		return nil, err
-	}
-	if len(response) == 0 {
-		return nil, errors.New("no categories could be retrieved")
-	}
-	edges := (response)[0].Data.DirectoriesWithTags.Edges
-	categories := make([]twitchCategory, 0, len(edges))
-	for i := range edges {
-		if slices.Contains(exclude, edges[i].Node.Slug) {
-			continue
-		}
-		category := &edges[i].Node
-		category.AvatarUrl = strings.Replace(category.AvatarUrl, "285x380", "144x192", 1)
-		if len(category.Tags) > 2 {
-			category.Tags = category.Tags[:2]
-		}
-		gameReleasedDate, err := time.Parse("2006-01-02T15:04:05Z", category.GameReleaseDate)
-		if err == nil {
-			if time.Since(gameReleasedDate) < 14*24*time.Hour {
-				category.IsNew = true
-			}
-		}
-		categories = append(categories, *category)
-	}
-	if len(categories) > limit {
-		categories = categories[:limit]
-	}
-	return categories, nil
-}
-</file>
-
-<file path=".github/FUNDING.yml">
-github: [glanceapp]
-patreon: glanceapp
-</file>
-
 <file path=".github/ISSUE_TEMPLATE/bug_report.yml">
 name: Bug report
 description: Let us know if something isn't working as expected
@@ -1591,501 +265,6 @@ body:
         Thank you for taking the time to submit your idea.
 </file>
 
-<file path="internal/glance/auth_test.go">
-package glance
-import (
-	"bytes"
-	"encoding/base64"
-	"testing"
-	"time"
-)
-func TestAuthTokenGenerationAndVerification(t *testing.T) {
-	secret, err := makeAuthSecretKey(AUTH_SECRET_KEY_LENGTH)
-	if err != nil {
-		t.Fatalf("Failed to generate secret key: %v", err)
-	}
-	secretBytes, err := base64.StdEncoding.DecodeString(secret)
-	if err != nil {
-		t.Fatalf("Failed to decode secret key: %v", err)
-	}
-	if len(secretBytes) != AUTH_SECRET_KEY_LENGTH {
-		t.Fatalf("Secret key length is not %d bytes", AUTH_SECRET_KEY_LENGTH)
-	}
-	now := time.Now()
-	username := "admin"
-	token, err := generateSessionToken(username, secretBytes, now)
-	if err != nil {
-		t.Fatalf("Failed to generate session token: %v", err)
-	}
-	usernameHashBytes, shouldRegen, err := verifySessionToken(token, secretBytes, now)
-	if err != nil {
-		t.Fatalf("Failed to verify session token: %v", err)
-	}
-	if shouldRegen {
-		t.Fatal("Token should not need to be regenerated immediately after generation")
-	}
-	computedUsernameHash, err := computeUsernameHash(username, secretBytes)
-	if err != nil {
-		t.Fatalf("Failed to compute username hash: %v", err)
-	}
-	if !bytes.Equal(usernameHashBytes, computedUsernameHash) {
-		t.Fatal("Username hash does not match the expected value")
-	}
-	// Test token regeneration
-	timeRightAfterRegenPeriod := now.Add(AUTH_TOKEN_VALID_PERIOD - AUTH_TOKEN_REGEN_BEFORE + 2*time.Second)
-	_, shouldRegen, err = verifySessionToken(token, secretBytes, timeRightAfterRegenPeriod)
-	if err != nil {
-		t.Fatalf("Token verification should not fail during regeneration period, err: %v", err)
-	}
-	if !shouldRegen {
-		t.Fatal("Token should have been marked for regeneration")
-	}
-	// Test token expiration
-	_, _, err = verifySessionToken(token, secretBytes, now.Add(AUTH_TOKEN_VALID_PERIOD+2*time.Second))
-	if err == nil {
-		t.Fatal("Expected token verification to fail after token expiration")
-	}
-	// Test tampered token
-	decodedToken, err := base64.StdEncoding.DecodeString(token)
-	if err != nil {
-		t.Fatalf("Failed to decode token: %v", err)
-	}
-	// If any of the bytes are off by 1, the token should be considered invalid
-	for i := range len(decodedToken) {
-		tampered := make([]byte, len(decodedToken))
-		copy(tampered, decodedToken)
-		tampered[i] += 1
-		_, _, err = verifySessionToken(base64.StdEncoding.EncodeToString(tampered), secretBytes, now)
-		if err == nil {
-			t.Fatalf("Expected token verification to fail for tampered token at index %d", i)
-		}
-	}
-}
-</file>
-
-<file path="internal/glance/auth.go">
-package glance
-import (
-	"bytes"
-	"crypto/hmac"
-	"crypto/rand"
-	"crypto/sha256"
-	"encoding/base64"
-	"encoding/binary"
-	"encoding/json"
-	"fmt"
-	"io"
-	"log"
-	mathrand "math/rand/v2"
-	"net/http"
-	"strconv"
-	"strings"
-	"time"
-	"golang.org/x/crypto/bcrypt"
-)
-const AUTH_SESSION_COOKIE_NAME = "session_token"
-const AUTH_RATE_LIMIT_WINDOW = 5 * time.Minute
-const AUTH_RATE_LIMIT_MAX_ATTEMPTS = 5
-const AUTH_TOKEN_SECRET_LENGTH = 32
-const AUTH_USERNAME_HASH_LENGTH = 32
-const AUTH_SECRET_KEY_LENGTH = AUTH_TOKEN_SECRET_LENGTH + AUTH_USERNAME_HASH_LENGTH
-const AUTH_TIMESTAMP_LENGTH = 4 // uint32
-const AUTH_TOKEN_DATA_LENGTH = AUTH_USERNAME_HASH_LENGTH + AUTH_TIMESTAMP_LENGTH
-// How long the token will be valid for
-const AUTH_TOKEN_VALID_PERIOD = 14 * 24 * time.Hour // 14 days
-// How long the token has left before it should be regenerated
-const AUTH_TOKEN_REGEN_BEFORE = 7 * 24 * time.Hour // 7 days
-var loginPageTemplate = mustParseTemplate("login.html", "document.html", "footer.html")
-type doWhenUnauthorized int
-const (
-	redirectToLogin doWhenUnauthorized = iota
-	showUnauthorizedJSON
-)
-type failedAuthAttempt struct {
-	attempts int
-	first    time.Time
-}
-func generateSessionToken(username string, secret []byte, now time.Time) (string, error) {
-	if len(secret) != AUTH_SECRET_KEY_LENGTH {
-		return "", fmt.Errorf("secret key length is not %d bytes", AUTH_SECRET_KEY_LENGTH)
-	}
-	usernameHash, err := computeUsernameHash(username, secret)
-	if err != nil {
-		return "", err
-	}
-	data := make([]byte, AUTH_TOKEN_DATA_LENGTH)
-	copy(data, usernameHash)
-	expires := now.Add(AUTH_TOKEN_VALID_PERIOD).Unix()
-	binary.LittleEndian.PutUint32(data[AUTH_USERNAME_HASH_LENGTH:], uint32(expires))
-	h := hmac.New(sha256.New, secret[0:AUTH_TOKEN_SECRET_LENGTH])
-	h.Write(data)
-	signature := h.Sum(nil)
-	encodedToken := base64.StdEncoding.EncodeToString(append(data, signature...))
-	// encodedToken ends up being (hashed username + expiration timestamp + signature) encoded as base64
-	return encodedToken, nil
-}
-func computeUsernameHash(username string, secret []byte) ([]byte, error) {
-	if len(secret) != AUTH_SECRET_KEY_LENGTH {
-		return nil, fmt.Errorf("secret key length is not %d bytes", AUTH_SECRET_KEY_LENGTH)
-	}
-	h := hmac.New(sha256.New, secret[AUTH_TOKEN_SECRET_LENGTH:])
-	h.Write([]byte(username))
-	return h.Sum(nil), nil
-}
-func verifySessionToken(token string, secretBytes []byte, now time.Time) ([]byte, bool, error) {
-	tokenBytes, err := base64.StdEncoding.DecodeString(token)
-	if err != nil {
-		return nil, false, err
-	}
-	if len(tokenBytes) != AUTH_TOKEN_DATA_LENGTH+32 {
-		return nil, false, fmt.Errorf("token length is invalid")
-	}
-	if len(secretBytes) != AUTH_SECRET_KEY_LENGTH {
-		return nil, false, fmt.Errorf("secret key length is not %d bytes", AUTH_SECRET_KEY_LENGTH)
-	}
-	usernameHashBytes := tokenBytes[0:AUTH_USERNAME_HASH_LENGTH]
-	timestampBytes := tokenBytes[AUTH_USERNAME_HASH_LENGTH : AUTH_USERNAME_HASH_LENGTH+AUTH_TIMESTAMP_LENGTH]
-	providedSignatureBytes := tokenBytes[AUTH_TOKEN_DATA_LENGTH:]
-	h := hmac.New(sha256.New, secretBytes[0:32])
-	h.Write(tokenBytes[0:AUTH_TOKEN_DATA_LENGTH])
-	expectedSignatureBytes := h.Sum(nil)
-	if !hmac.Equal(expectedSignatureBytes, providedSignatureBytes) {
-		return nil, false, fmt.Errorf("signature does not match")
-	}
-	expiresTimestamp := int64(binary.LittleEndian.Uint32(timestampBytes))
-	if now.Unix() > expiresTimestamp {
-		return nil, false, fmt.Errorf("token has expired")
-	}
-	return usernameHashBytes,
-		// True if the token should be regenerated
-		time.Unix(expiresTimestamp, 0).Add(-AUTH_TOKEN_REGEN_BEFORE).Before(now),
-		nil
-}
-func makeAuthSecretKey(length int) (string, error) {
-	key := make([]byte, length)
-	_, err := rand.Read(key)
-	if err != nil {
-		return "", err
-	}
-	return base64.StdEncoding.EncodeToString(key), nil
-}
-func (a *application) handleAuthenticationAttempt(w http.ResponseWriter, r *http.Request) {
-	if r.Header.Get("Content-Type") != "application/json" {
-		w.WriteHeader(http.StatusBadRequest)
-		return
-	}
-	waitOnFailure := 1*time.Second - time.Duration(mathrand.IntN(500))*time.Millisecond
-	ip := a.addressOfRequest(r)
-	a.authAttemptsMu.Lock()
-	exceededRateLimit, retryAfter := func() (bool, int) {
-		attempt, exists := a.failedAuthAttempts[ip]
-		if !exists {
-			a.failedAuthAttempts[ip] = &failedAuthAttempt{
-				attempts: 1,
-				first:    time.Now(),
-			}
-			return false, 0
-		}
-		elapsed := time.Since(attempt.first)
-		if elapsed < AUTH_RATE_LIMIT_WINDOW && attempt.attempts >= AUTH_RATE_LIMIT_MAX_ATTEMPTS {
-			return true, max(1, int(AUTH_RATE_LIMIT_WINDOW.Seconds()-elapsed.Seconds()))
-		}
-		attempt.attempts++
-		return false, 0
-	}()
-	if exceededRateLimit {
-		a.authAttemptsMu.Unlock()
-		time.Sleep(waitOnFailure)
-		w.Header().Set("Retry-After", strconv.Itoa(retryAfter))
-		w.WriteHeader(http.StatusTooManyRequests)
-		return
-	} else {
-		// Clean up old failed attempts
-		for ipOfAttempt := range a.failedAuthAttempts {
-			if time.Since(a.failedAuthAttempts[ipOfAttempt].first) > AUTH_RATE_LIMIT_WINDOW {
-				delete(a.failedAuthAttempts, ipOfAttempt)
-			}
-		}
-		a.authAttemptsMu.Unlock()
-	}
-	body, err := io.ReadAll(r.Body)
-	if err != nil {
-		w.WriteHeader(http.StatusBadRequest)
-		return
-	}
-	var creds struct {
-		Username string `json:"username"`
-		Password string `json:"password"`
-	}
-	err = json.Unmarshal(body, &creds)
-	if err != nil {
-		w.WriteHeader(http.StatusBadRequest)
-		return
-	}
-	logAuthFailure := func() {
-		log.Printf(
-			"Failed login attempt for user '%s' from %s",
-			creds.Username, ip,
-		)
-	}
-	if len(creds.Username) == 0 || len(creds.Password) == 0 {
-		time.Sleep(waitOnFailure)
-		w.WriteHeader(http.StatusUnauthorized)
-		return
-	}
-	if len(creds.Username) > 50 || len(creds.Password) > 100 {
-		logAuthFailure()
-		time.Sleep(waitOnFailure)
-		w.WriteHeader(http.StatusUnauthorized)
-		return
-	}
-	u, exists := a.Config.Auth.Users[creds.Username]
-	if !exists {
-		logAuthFailure()
-		time.Sleep(waitOnFailure)
-		w.WriteHeader(http.StatusUnauthorized)
-		return
-	}
-	if err := bcrypt.CompareHashAndPassword(u.PasswordHash, []byte(creds.Password)); err != nil {
-		logAuthFailure()
-		time.Sleep(waitOnFailure)
-		w.WriteHeader(http.StatusUnauthorized)
-		return
-	}
-	token, err := generateSessionToken(creds.Username, a.authSecretKey, time.Now())
-	if err != nil {
-		log.Printf("Could not compute session token during login attempt: %v", err)
-		time.Sleep(waitOnFailure)
-		w.WriteHeader(http.StatusUnauthorized)
-		return
-	}
-	a.setAuthSessionCookie(w, r, token, time.Now().Add(AUTH_TOKEN_VALID_PERIOD))
-	a.authAttemptsMu.Lock()
-	delete(a.failedAuthAttempts, ip)
-	a.authAttemptsMu.Unlock()
-	w.WriteHeader(http.StatusOK)
-}
-func (a *application) isAuthorized(w http.ResponseWriter, r *http.Request) bool {
-	if !a.RequiresAuth {
-		return true
-	}
-	token, err := r.Cookie(AUTH_SESSION_COOKIE_NAME)
-	if err != nil || token.Value == "" {
-		return false
-	}
-	usernameHash, shouldRegenerate, err := verifySessionToken(token.Value, a.authSecretKey, time.Now())
-	if err != nil {
-		return false
-	}
-	username, exists := a.usernameHashToUsername[string(usernameHash)]
-	if !exists {
-		return false
-	}
-	_, exists = a.Config.Auth.Users[username]
-	if !exists {
-		return false
-	}
-	if shouldRegenerate {
-		newToken, err := generateSessionToken(username, a.authSecretKey, time.Now())
-		if err != nil {
-			log.Printf("Could not compute session token during regeneration: %v", err)
-			return false
-		}
-		a.setAuthSessionCookie(w, r, newToken, time.Now().Add(AUTH_TOKEN_VALID_PERIOD))
-	}
-	return true
-}
-// Handles sending the appropriate response for an unauthorized request and returns true if the request was unauthorized
-func (a *application) handleUnauthorizedResponse(w http.ResponseWriter, r *http.Request, fallback doWhenUnauthorized) bool {
-	if a.isAuthorized(w, r) {
-		return false
-	}
-	switch fallback {
-	case redirectToLogin:
-		http.Redirect(w, r, a.Config.Server.BaseURL+"/login", http.StatusSeeOther)
-	case showUnauthorizedJSON:
-		w.WriteHeader(http.StatusUnauthorized)
-		w.Write([]byte(`{"error": "Unauthorized"}`))
-	}
-	return true
-}
-// Maybe this should be a POST request instead?
-func (a *application) handleLogoutRequest(w http.ResponseWriter, r *http.Request) {
-	a.setAuthSessionCookie(w, r, "", time.Now().Add(-1*time.Hour))
-	http.Redirect(w, r, a.Config.Server.BaseURL+"/login", http.StatusSeeOther)
-}
-func (a *application) setAuthSessionCookie(w http.ResponseWriter, r *http.Request, token string, expires time.Time) {
-	http.SetCookie(w, &http.Cookie{
-		Name:     AUTH_SESSION_COOKIE_NAME,
-		Value:    token,
-		Expires:  expires,
-		Secure:   strings.ToLower(r.Header.Get("X-Forwarded-Proto")) == "https",
-		Path:     a.Config.Server.BaseURL + "/",
-		SameSite: http.SameSiteLaxMode,
-		HttpOnly: true,
-	})
-}
-func (a *application) handleLoginPageRequest(w http.ResponseWriter, r *http.Request) {
-	if a.isAuthorized(w, r) {
-		http.Redirect(w, r, a.Config.Server.BaseURL+"/", http.StatusSeeOther)
-		return
-	}
-	data := &templateData{
-		App: a,
-	}
-	a.populateTemplateRequestData(&data.Request, r)
-	var responseBytes bytes.Buffer
-	err := loginPageTemplate.Execute(&responseBytes, data)
-	if err != nil {
-		w.WriteHeader(http.StatusInternalServerError)
-		w.Write([]byte(err.Error()))
-		return
-	}
-	w.Write(responseBytes.Bytes())
-}
-</file>
-
-<file path="internal/glance/hub.go">
-package glance
-import (
-	"log"
-	"net/http"
-	"sync"
-	"time"
-	"github.com/gorilla/websocket"
-)
-var upgrader = websocket.Upgrader{
-	ReadBufferSize:  1024,
-	WriteBufferSize: 1024,
-	CheckOrigin: func(r *http.Request) bool {
-		return true // Allow all for personal dashboard
-	},
-}
-type client struct {
-	hub  *hub
-	conn *websocket.Conn
-	send chan []byte
-}
-func (c *client) writePump() {
-	ticker := time.NewTicker(54 * time.Second)
-	defer func() {
-		ticker.Stop()
-		c.conn.Close()
-	}()
-	for {
-		select {
-		case message, ok := <-c.send:
-			c.conn.SetWriteDeadline(time.Now().Add(10 * time.Second))
-			if !ok {
-				c.conn.WriteMessage(websocket.CloseMessage, []byte{})
-				return
-			}
-			w, err := c.conn.NextWriter(websocket.TextMessage)
-			if err != nil {
-				return
-			}
-			w.Write(message)
-			n := len(c.send)
-			for i := 0; i < n; i++ {
-				w.Write([]byte{'\n'})
-				w.Write(<-c.send)
-			}
-			if err := w.Close(); err != nil {
-				return
-			}
-		case <-ticker.C:
-			c.conn.SetWriteDeadline(time.Now().Add(10 * time.Second))
-			if err := c.conn.WriteMessage(websocket.PingMessage, nil); err != nil {
-				return
-			}
-		}
-	}
-}
-func (c *client) readPump() {
-	defer func() {
-		c.hub.unregister <- c
-		c.conn.Close()
-	}()
-	c.conn.SetReadLimit(512)
-	c.conn.SetReadDeadline(time.Now().Add(60 * time.Second))
-	c.conn.SetPongHandler(func(string) error { c.conn.SetReadDeadline(time.Now().Add(60 * time.Second)); return nil })
-	for {
-		_, _, err := c.conn.ReadMessage()
-		if err != nil {
-			if websocket.IsUnexpectedCloseError(err, websocket.CloseGoingAway, websocket.CloseAbnormalClosure) {
-				log.Printf("error: %v", err)
-			}
-			break
-		}
-	}
-}
-type hub struct {
-	clients    map[*client]bool
-	broadcast  chan []byte
-	register   chan *client
-	unregister chan *client
-	mu         sync.Mutex
-}
-func newHub() *hub {
-	return &hub{
-		broadcast:  make(chan []byte),
-		register:   make(chan *client),
-		unregister: make(chan *client),
-		clients:    make(map[*client]bool),
-	}
-}
-func (h *hub) run() {
-	for {
-		select {
-		case client := <-h.register:
-			h.mu.Lock()
-			h.clients[client] = true
-			h.mu.Unlock()
-		case client := <-h.unregister:
-			h.mu.Lock()
-			if _, ok := h.clients[client]; ok {
-				delete(h.clients, client)
-				close(client.send)
-			}
-			h.mu.Unlock()
-		case message := <-h.broadcast:
-			h.mu.Lock()
-			for client := range h.clients {
-				select {
-				case client.send <- message:
-				default:
-					close(client.send)
-					delete(h.clients, client)
-				}
-			}
-			h.mu.Unlock()
-		}
-	}
-}
-func (h *hub) broadcastHTML(html string) {
-	h.broadcast <- []byte(html)
-}
-func (h *hub) close() {
-	h.mu.Lock()
-	defer h.mu.Unlock()
-	for client := range h.clients {
-		close(client.send)
-		delete(h.clients, client)
-	}
-}
-func (h *hub) handleWebSocket(w http.ResponseWriter, r *http.Request) {
-	conn, err := upgrader.Upgrade(w, r, nil)
-	if err != nil {
-		log.Println(err)
-		return
-	}
-	client := &client{hub: h, conn: conn, send: make(chan []byte, 256)}
-	client.hub.register <- client
-	go client.writePump()
-	go client.readPump()
-}
-</file>
-
 <file path="internal/glance/static/css/forum-posts.css">
 .forum-post-list-thumbnail {
     flex-shrink: 0;
@@ -2103,140 +282,6 @@ func (h *hub) handleWebSocket(w http.ResponseWriter, r *http.Request) {
     .forum-post-autohide {
         display: none;
     }
-}
-</file>
-
-<file path="internal/glance/static/css/login.css">
-.login-bounds {
-    max-width: 500px;
-    padding: 0 2rem;
-}
-.form-label {
-    text-transform: uppercase;
-    margin-bottom: 0.5rem;
-}
-.form-input {
-    transition: border-color .2s;
-}
-.form-input input {
-    border: 0;
-    background: none;
-    width: 100%;
-    height: 5.2rem;
-    font: inherit;
-    outline: none;
-    color: var(--color-text-highlight);
-}
-.form-input-icon {
-    width: 2rem;
-    height: 2rem;
-    margin-top: -0.1rem;
-    opacity: 0.5;
-}
-.form-input input[type="password"] {
-    letter-spacing: 0.3rem;
-    font-size: 0.9em;
-}
-.form-input input[type="password"]::placeholder {
-    letter-spacing: 0;
-    font-size: var(--font-size-base);
-}
-.form-input:hover {
-    border-color: var(--color-progress-border);
-}
-.form-input:focus-within {
-    border-color: var(--color-primary);
-    transition-duration: .7s;
-}
-.login-button {
-    width: 100%;
-    display: block;
-    padding: 1rem;
-    background: none;
-    border: 1px solid var(--color-text-subdue);
-    border-radius: var(--border-radius);
-    color: var(--color-text-paragraph);
-    cursor: pointer;
-    font: inherit;
-    font-size: var(--font-size-h4);
-    display: flex;
-    gap: .5rem;
-    align-items: center;
-    justify-content: center;
-    transition: all .3s, margin-top 0s;
-    margin-top: 3rem;
-}
-.login-button:not(:disabled) {
-    box-shadow: 0 0 10px 1px var(--color-separator);
-}
-.login-error-message:not(:empty) + .login-button {
-    margin-top: 2rem;
-}
-.login-button:focus, .login-button:hover {
-    outline: none;
-    border-color: var(--color-primary);
-    color: var(--color-primary);
-}
-.login-button:disabled {
-    border-color: var(--color-separator);
-    color: var(--color-text-subdue);
-    cursor: not-allowed;
-}
-.login-button svg {
-    width: 1.7rem;
-    height: 1.7rem;
-    transition: transform .2s;
-}
-.login-button:not(:disabled):hover svg, .login-button:not(:disabled):focus svg {
-    transform: translateX(.5rem);
-}
-.animate-entrance {
-    animation: fieldReveal 0.7s backwards;
-    animation-timing-function: cubic-bezier(0.22, 1, 0.36, 1);
-}
-.animate-entrance:nth-child(1) { animation-delay: .1s; }
-.animate-entrance:nth-child(2) { animation-delay: .2s; }
-.animate-entrance:nth-child(4) { animation-delay: .3s; }
-@keyframes fieldReveal {
-    from {
-        opacity: 0.0001;
-        transform: translateY(4rem);
-    }
-}
-.login-error-message {
-    color: var(--color-negative);
-    font-size: var(--font-size-base);
-    padding: 1.3rem calc(var(--widget-content-horizontal-padding) + 1px);
-    position: relative;
-    margin-top: 2rem;
-    animation: errorMessageEntrance 0.4s backwards cubic-bezier(0.34, 1.56, 0.64, 1);
-}
-@keyframes errorMessageEntrance {
-    from {
-        opacity: 0;
-        transform: scale(1.1);
-    }
-}
-.login-error-message:empty {
-    display: none;
-}
-.login-error-message::before {
-    content: "";
-    position: absolute;
-    inset: 0;
-    border-radius: var(--border-radius);
-    background: var(--color-negative);
-    opacity: 0.05;
-    z-index: -1;
-}
-.footer {
-    animation-delay: .4s;
-    animation-duration: 1s;
-}
-.toggle-password-visibility {
-    background: none;
-    border: none;
-    cursor: pointer;
 }
 </file>
 
@@ -2911,117 +956,6 @@ func (h *hub) handleWebSocket(w http.ResponseWriter, r *http.Request) {
 }
 </file>
 
-<file path="internal/glance/static/css/widget-todo.css">
-.todo-widget {
-    padding-top: 4rem;
-}
-.todo-plus-icon {
-    --icon-color: var(--color-text-subdue);
-    position: relative;
-    width: 1.4rem;
-    height: 1.4rem;
-}
-.todo-plus-icon::before, .todo-plus-icon::after {
-    content: "";
-    position: absolute;
-    background-color: var(--icon-color);
-    transition: background-color .2s;
-}
-.todo-plus-icon::before {
-    width: 2px;
-    inset-block: 0.2rem;
-    left: 50%;
-    transform: translateX(-50%);
-}
-.todo-plus-icon::after {
-    height: 2px;
-    inset-inline: 0.2rem;
-    top: 50%;
-    transform: translateY(-50%);
-}
-.todo-input textarea::placeholder {
-    color: var(--color-text-base-muted);
-}
-.todo-input {
-    position: relative;
-    color: var(--color-text-highlight);
-}
-.todo-input:focus-within .todo-plus-icon {
-    --icon-color: var(--color-text-base);
-}
-.todo-item {
-    transform-origin: center;
-    padding: 0.5rem 0;
-}
-.todo-item-checkbox {
-    -webkit-appearance: none;
-    appearance: none;
-    border: 2px solid var(--color-text-subdue);
-    width: 1.4rem;
-    height: 1.4rem;
-    position: relative;
-    cursor: pointer;
-    border-radius: 0.3rem;
-    transition: border-color .2s;
-}
-.todo-item-checkbox::before {
-    content: "";
-    inset: -1rem;
-    position: absolute;
-}
-.todo-item-checkbox::after {
-    content: '';
-    position: absolute;
-    inset: 0.3rem;
-    border-radius: 0.1rem;
-    opacity: 0;
-    transition: opacity .2s;
-}
-.todo-item-checkbox:checked::after {
-    background: var(--color-primary);
-    opacity: 1;
-}
-.todo-item-checkbox:focus-visible {
-    outline: none;
-    border-color: var(--color-primary);
-}
-.todo-item-text {
-    color: var(--color-text-base);
-    transition: color .35s;
-}
-.todo-item-text:focus {
-    color: var(--color-text-highlight);
-}
-.todo-item-drag-handle {
-    position: absolute;
-    top: -0.5rem;
-    inset-inline: 0;
-    height: 1rem;
-    cursor: grab;
-}
-.todo-item.is-being-dragged .todo-item-drag-handle {
-    height: 3rem;
-    top: -1.5rem;
-}
-.todo-item:has(.todo-item-checkbox:checked) .todo-item-text {
-    text-decoration: line-through;
-    color: var(--color-text-subdue);
-}
-.todo-item-delete {
-    width: 1.5rem;
-    height: 1.5rem;
-    opacity: 0;
-    transition: opacity .2s;
-    outline-offset: .5rem;
-}
-.todo-item:hover .todo-item-delete, .todo-item:focus-within .todo-item-delete {
-    opacity: 1;
-}
-.todo-item.is-being-dragged .todo-item-delete {
-    opacity: 0;
-}
-</file>
-
 <file path="internal/glance/static/css/widget-twitch.css">
 .twitch-category-thumbnail {
     width: 5rem;
@@ -3217,6 +1151,65 @@ func (h *hub) handleWebSocket(w http.ResponseWriter, r *http.Request) {
 {{ end }}
 </file>
 
+<file path="internal/glance/templates/change-detection.html">
+{{ template "widget-base.html" . }}
+{{ define "widget-content" }}
+<ul class="list list-gap-14 collapsible-container" data-collapse-after="{{ .CollapseAfter }}">
+    {{ range .ChangeDetections }}
+    <li>
+        <a class="size-h4 block text-truncate color-highlight" href="{{ .URL }}" target="_blank" rel="noreferrer">{{ .Title }}</a>
+        <ul class="list-horizontal-text">
+            <li {{ dynamicRelativeTimeAttrs .LastChanged }}></li>
+            <li class="shrink min-width-0"><a class="visited-indicator" href="{{ .DiffURL }}" target="_blank" rel="noreferrer">diff:{{ .PreviousHash }}</a></li>
+        </ul>
+    </li>
+    {{ else }}
+    <li>No watches configured</li>
+    {{ end}}
+</ul>
+{{ end }}
+</file>
+
+<file path="internal/glance/templates/clock.html">
+{{ template "widget-base.html" . }}
+{{ define "widget-content" }}
+<div class="clock" data-hour-format="{{ .HourFormat }}">
+    <div class="flex justify-between items-center" data-local-time>
+        <div>
+            <div class="color-highlight size-h1" data-date></div>
+            <div data-year></div>
+        </div>
+        <div class="text-right">
+            <div class="clock-time size-h1" data-time></div>
+            <div data-weekday></div>
+        </div>
+    </div>
+    {{ if gt (len .Timezones) 0 }}
+    <hr class="margin-block-10">
+    <ul class="list list-gap-4">
+        {{ range .Timezones }}
+        <li class="flex items-center gap-15" data-time-in-zone="{{ .Timezone }}">
+            <div class="grow min-width-0">
+                <div class="text-truncate">{{ if ne .Label "" }}{{ .Label }}{{ else }}{{ .Timezone }}{{ end }}</div>
+            </div>
+            <div class="color-subdue" data-time-diff></div>
+            <div class="size-h4 clock-time shrink-0 text-right" data-time></div>
+        </li>
+        {{ end }}
+    </ul>
+    {{ end }}
+</div>
+{{ end }}
+</file>
+
+<file path="internal/glance/templates/custom-api.html">
+{{ template "widget-base.html" . }}
+{{ define "widget-content-classes" }}{{ if .Frameless }}widget-content-frameless{{ end }}{{ end }}
+{{ define "widget-content" }}
+{{ .CompiledHTML }}
+{{ end }}
+</file>
+
 <file path="internal/glance/templates/dns-stats.html">
 {{ template "widget-base.html" . }}
 {{ define "widget-content" }}
@@ -3304,67 +1297,20 @@ func (h *hub) handleWebSocket(w http.ResponseWriter, r *http.Request) {
 {{ end }}
 </file>
 
-<file path="internal/glance/templates/footer.html">
-{{ if not .App.Config.Branding.HideFooter }}
-<footer class="footer flex items-center flex-column">
-{{ if eq "" .App.Config.Branding.CustomFooter }}
-    <div>
-        <a class="size-h3" href="https://github.com/glanceapp/glance" target="_blank" rel="noreferrer">Glance</a> {{ if ne "dev" .App.Version }}<a class="visited-indicator" title="Release notes" href="https://github.com/glanceapp/glance/releases/tag/{{ .App.Version }}" target="_blank" rel="noreferrer">{{ .App.Version }}</a>{{ else }}({{ .App.Version }}){{ end }}
-    </div>
-{{ else }}
-    {{ .App.Config.Branding.CustomFooter }}
-{{ end }}
-</footer>
+<file path="internal/glance/templates/extension.html">
+{{ template "widget-base.html" . }}
+{{ define "widget-content-classes" }}{{ if .Extension.Frameless }}widget-content-frameless{{ end }}{{ end }}
+{{ define "widget-content" }}
+{{ .Extension.Content }}
 {{ end }}
 </file>
 
-<file path="internal/glance/templates/login.html">
-{{- template "document.html" . }}
-{{- define "document-title" }}Login{{ end }}
-{{- define "document-head-before" }}
-<link rel="preload" href='{{ .App.StaticAssetPath "js/templating.js" }}' as="script"/>
-<link rel="prefetch" href='{{ .App.StaticAssetPath "js/page.js" }}'/>
-{{- end }}
-{{- define "document-head-after" }}
-<link rel="stylesheet" href='{{ .App.StaticAssetPath "css/login.css" }}'>
-<script type="module" src='{{ .App.StaticAssetPath "js/login.js" }}'></script>
-{{- end }}
-{{- define "document-body" }}
-<div class="flex flex-column body-content">
-    <div class="flex grow items-center justify-center" style="padding-bottom: 5rem">
-        <h1 class="visually-hidden">Login</h1>
-        <main id="login-container" class="grow login-bounds" style="display: none;">
-            <div class="animate-entrance">
-                <label class="form-label widget-header" for="username">Username</label>
-                <div class="form-input widget-content-frame padding-inline-widget flex gap-10 items-center">
-                    <svg class="form-input-icon" fill="var(--color-text-subdue)" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" aria-hidden="true">
-                        <path d="M10 8a3 3 0 1 0 0-6 3 3 0 0 0 0 6ZM3.465 14.493a1.23 1.23 0 0 0 .41 1.412A9.957 9.957 0 0 0 10 18c2.31 0 4.438-.784 6.131-2.1.43-.333.604-.903.408-1.41a7.002 7.002 0 0 0-13.074.003Z" />
-                    </svg>
-                    <input type="text" id="username" class="input" placeholder="Enter your username" autocomplete="off">
-                </div>
-            </div>
-            <div class="animate-entrance">
-                <label class="form-label widget-header margin-top-20" for="password">Password</label>
-                <div class="form-input widget-content-frame padding-inline-widget flex gap-10 items-center">
-                    <svg class="form-input-icon" fill="var(--color-text-subdue)" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" aria-hidden="true">
-                        <path fill-rule="evenodd" d="M8 7a5 5 0 1 1 3.61 4.804l-1.903 1.903A1 1 0 0 1 9 14H8v1a1 1 0 0 1-1 1H6v1a1 1 0 0 1-1 1H3a1 1 0 0 1-1-1v-2a1 1 0 0 1 .293-.707L8.196 8.39A5.002 5.002 0 0 1 8 7Zm5-3a.75.75 0 0 0 0 1.5A1.5 1.5 0 0 1 14.5 7 .75.75 0 0 0 16 7a3 3 0 0 0-3-3Z" clip-rule="evenodd" />
-                    </svg>
-                    <input type="password" id="password" class="input" placeholder="********" autocomplete="off">
-                    <button class="toggle-password-visibility" id="toggle-password-visibility" tabindex="-1"></button>
-                </div>
-            </div>
-            <div class="login-error-message" id="error-message"></div>
-            <button class="login-button animate-entrance" id="login-button">
-                <div>LOGIN</div>
-                <svg stroke="currentColor" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" aria-hidden="true">
-                    <path stroke-linecap="round" stroke-linejoin="round" d="M13.5 4.5 21 12m0 0-7.5 7.5M21 12H3" />
-                </svg>
-            </button>
-        </main>
-    </div>
-    {{ template "footer.html" . }}
-</div>
-{{- end }}
+<file path="internal/glance/templates/iframe.html">
+{{ template "widget-base.html" . }}
+{{ define "widget-content-classes" }}widget-content-frameless{{ end }}
+{{ define "widget-content" }}
+<iframe src="{{ .Source }}" width="100%" height="{{ .Height }}px" frameborder="0"></iframe>
+{{ end }}
 </file>
 
 <file path="internal/glance/templates/markets.html">
@@ -3389,6 +1335,46 @@ func (h *hub) handleWebSocket(w http.ResponseWriter, r *http.Request) {
     </div>
     {{ end }}
 </div>
+{{ end }}
+</file>
+
+<file path="internal/glance/templates/monitor-compact.html">
+{{ template "widget-base.html" . }}
+{{ define "widget-content" }}
+{{ if not (and .ShowFailingOnly (not .HasFailing)) }}
+<ul class="dynamic-columns list-gap-8">
+    {{ range .Sites }}
+    {{ if and $.ShowFailingOnly (eq .StatusStyle "ok" ) }}{{ continue }}{{ end }}
+    <div class="flex items-center gap-12">
+        {{ template "site" . }}
+    </div>
+    {{ end }}
+</ul>
+{{ else }}
+<div class="flex items-center justify-center gap-10 padding-block-5">
+    <p>All sites are online</p>
+    <svg class="shrink-0" style="width: 1.7rem;" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="var(--color-positive)">
+        <path fill-rule="evenodd" d="M2.25 12c0-5.385 4.365-9.75 9.75-9.75s9.75 4.365 9.75 9.75-4.365 9.75-9.75 9.75S2.25 17.385 2.25 12Zm13.36-1.814a.75.75 0 1 0-1.22-.872l-3.236 4.53L9.53 12.22a.75.75 0 0 0-1.06 1.06l2.25 2.25a.75.75 0 0 0 1.14-.094l3.75-5.25Z" clip-rule="evenodd" />
+    </svg>
+</div>
+{{ end }}
+{{ end }}
+{{ define "site" }}
+<a class="size-title-dynamic color-highlight text-truncate block grow" href="{{ .URL | safeURL }}" {{ if not .SameTab }}target="_blank"{{ end }} rel="noreferrer">{{ .Title }}</a>
+{{ if not .Status.TimedOut }}<div>{{ .Status.ResponseTime.Milliseconds | formatNumber }}ms</div>{{ end }}
+{{ if eq .StatusStyle "ok" }}
+<div class="monitor-site-status-icon-compact" title="{{ .Status.Code }}">
+    <svg fill="var(--color-positive)" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20">
+        <path fill-rule="evenodd" d="M10 18a8 8 0 1 0 0-16 8 8 0 0 0 0 16Zm3.857-9.809a.75.75 0 0 0-1.214-.882l-3.483 4.79-1.88-1.88a.75.75 0 1 0-1.06 1.061l2.5 2.5a.75.75 0 0 0 1.137-.089l4-5.5Z" clip-rule="evenodd" />
+    </svg>
+</div>
+{{ else }}
+<div class="monitor-site-status-icon-compact" title="{{ if .Status.Error }}{{ .Status.Error }}{{ else }}{{ .Status.Code }}{{ end }}">
+    <svg fill="var(--color-negative)" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20">
+        <path fill-rule="evenodd" d="M8.485 2.495c.673-1.167 2.357-1.167 3.03 0l6.28 10.875c.673 1.167-.17 2.625-1.516 2.625H3.72c-1.347 0-2.189-1.458-1.515-2.625L8.485 2.495ZM10 5a.75.75 0 0 1 .75.75v3.5a.75.75 0 0 1-1.5 0v-3.5A.75.75 0 0 1 10 5Zm0 9a1 1 0 1 0 0-2 1 1 0 0 0 0 2Z" clip-rule="evenodd" />
+    </svg>
+</div>
+{{ end }}
 {{ end }}
 </file>
 
@@ -3424,28 +1410,6 @@ func (h *hub) handleWebSocket(w http.ResponseWriter, r *http.Request) {
     </div>
 </div>
 {{ end }}
-</file>
-
-<file path="internal/glance/templates/page-content.html">
-{{ if .Page.ShowMobileHeader }}
-<div class="mobile-reachability-header">{{ .Page.Title }}</div>
-{{ end }}
-{{ if .Page.HeadWidgets }}
-<div class="head-widgets">
-    {{- range .Page.HeadWidgets }}
-    {{- .Render }}
-    {{- end }}
-</div>
-{{ end }}
-<div class="page-columns">
-{{- range .Page.Columns }}
-    <div class="page-column page-column-{{ .Size }}">
-        {{- range .Widgets }}
-        {{- .Render }}
-        {{- end }}
-    </div>
-{{- end }}
-</div>
 </file>
 
 <file path="internal/glance/templates/reddit-horizontal-cards.html">
@@ -3510,62 +1474,157 @@ func (h *hub) handleWebSocket(w http.ResponseWriter, r *http.Request) {
 {{ end }}
 </file>
 
-<file path="internal/glance/templates/repository.html">
+<file path="internal/glance/templates/releases.html">
 {{ template "widget-base.html" . }}
 {{ define "widget-content" }}
-<a class="size-h4 color-highlight" href="https://github.com/{{ $.Repository.Name }}" target="_blank" rel="noreferrer">{{ .Repository.Name }}</a>
-<ul class="list-horizontal-text">
-    <li>{{ .Repository.Stars | formatNumber }} stars</li>
-    <li>{{ .Repository.Forks | formatNumber }} forks</li>
+<ul class="list list-gap-10 collapsible-container" data-collapse-after="{{ .CollapseAfter }}">
+    {{ range .Releases }}
+    <li>
+        <div class="flex items-center gap-10">
+            <a class="size-h4 block text-truncate color-primary-if-not-visited" href="{{ .NotesUrl }}" target="_blank" rel="noreferrer">{{ .Name }}</a>
+            {{ if $.ShowSourceIcon }}
+            <img class="flat-icon release-source-icon" src="{{ .SourceIconURL }}" alt="" loading="lazy">
+            {{ end }}
+        </div>
+        <ul class="list-horizontal-text">
+            <li {{ dynamicRelativeTimeAttrs .TimeReleased }}></li>
+            <li>{{ .Version }}</li>
+            {{ if gt .Downvotes 3 }}
+            <li>{{ .Downvotes | formatNumber }} ⚠</li>
+            {{ end }}
+        </ul>
+    </li>
+    {{ end }}
 </ul>
-{{ if gt (len .Repository.Commits) 0 }}
-<hr class="margin-block-8">
-<a class="text-compact" href="https://github.com/{{ $.Repository.Name }}/commits" target="_blank" rel="noreferrer">Last {{ .CommitsLimit }} commits</a>
-<div class="flex gap-7 size-h5 size-base-on-mobile margin-top-3">
-    <ul class="list list-gap-2">
-        {{ range .Repository.Commits }}
-        <li {{ dynamicRelativeTimeAttrs .CreatedAt }}></li>
-        {{ end }}
-    </ul>
-    <ul class="list list-gap-2 min-width-0">
-        {{ range .Repository.Commits }}
-        <li><a class="color-primary-if-not-visited text-truncate block" title="{{ .Author }}" target="_blank" rel="noreferrer" href="https://github.com/{{ $.Repository.Name }}/commit/{{ .Sha }}">{{ .Message }}</a></li>
-        {{ end }}
-    </ul>
-</div>
 {{ end }}
-{{ if gt (len .Repository.PullRequests) 0 }}
-<hr class="margin-block-8">
-<a class="text-compact" href="https://github.com/{{ $.Repository.Name }}/pulls" target="_blank" rel="noreferrer">Open pull requests ({{ .Repository.OpenPullRequests | formatNumber }} total)</a>
-<div class="flex gap-7 size-h5 size-base-on-mobile margin-top-3">
-    <ul class="list list-gap-2">
-        {{ range .Repository.PullRequests }}
-        <li {{ dynamicRelativeTimeAttrs .CreatedAt }}></li>
-        {{ end }}
-    </ul>
-    <ul class="list list-gap-2 min-width-0">
-        {{ range .Repository.PullRequests }}
-        <li><a class="color-primary-if-not-visited text-truncate block" target="_blank" rel="noreferrer" href="https://github.com/{{ $.Repository.Name }}/pull/{{ .Number }}">{{ .Title }}</a></li>
-        {{ end }}
-    </ul>
-</div>
+</file>
+
+<file path="internal/glance/templates/rss-detailed-list.html">
+{{ template "widget-base.html" . }}
+{{ define "widget-content" }}
+<ul class="list list-gap-24 collapsible-container" data-collapse-after="{{ .CollapseAfter }}">
+    {{ range .Items }}
+    <li class="flex gap-15 items-start row-reverse-on-mobile thumbnail-parent">
+        <div class="thumbnail-container rss-detailed-thumbnail">
+            {{ if ne "" .ImageURL }}
+            <img class="thumbnail" loading="lazy" src="{{ .ImageURL }}" alt="">
+            {{ else }}
+            <svg class="scale-half hide-on-mobile" stroke="var(--color-text-subdue)" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5">
+                <path stroke-linecap="round" stroke-linejoin="round" d="m2.25 15.75 5.159-5.159a2.25 2.25 0 0 1 3.182 0l5.159 5.159m-1.5-1.5 1.409-1.409a2.25 2.25 0 0 1 3.182 0l2.909 2.909m-18 3.75h16.5a1.5 1.5 0 0 0 1.5-1.5V6a1.5 1.5 0 0 0-1.5-1.5H3.75A1.5 1.5 0 0 0 2.25 6v12a1.5 1.5 0 0 0 1.5 1.5Zm10.5-11.25h.008v.008h-.008V8.25Zm.375 0a.375.375 0 1 1-.75 0 .375.375 0 0 1 .75 0Z" />
+            </svg>
+            {{ end }}
+        </div>
+        <div class="grow min-width-0">
+            <a class="size-h3 color-primary-if-not-visited" href="{{ .Link }}" target="_blank" rel="noreferrer">{{ .Title }}</a>
+            <ul class="list-horizontal-text flex-nowrap">
+                <li {{ dynamicRelativeTimeAttrs .PublishedAt }}></li>
+                <li class="min-width-0">
+                    <a class="block text-truncate" href="{{ .ChannelURL }}" target="_blank" rel="noreferrer">{{ .ChannelName }}</a>
+                </li>
+            </ul>
+            {{ if ne "" .Description }}
+            <p class="rss-detailed-description text-truncate-2-lines margin-top-10">{{ .Description }}</p>
+            {{ end }}
+            {{ if gt (len .Categories) 0 }}
+            <ul class="attachments margin-top-10">
+            {{ range .Categories }}
+                <li>{{ . }}</li>
+            {{ end }}
+            </ul>
+            {{ end }}
+        </div>
+    </li>
+    {{ else }}
+    <li>{{ .NoItemsMessage }}</li>
+    {{ end }}
+</ul>
 {{ end }}
-{{ if gt (len .Repository.Issues) 0 }}
-<hr class="margin-block-10">
-<a class="text-compact" href="https://github.com/{{ $.Repository.Name }}/issues" target="_blank" rel="noreferrer">Open issues ({{ .Repository.OpenIssues | formatNumber }} total)</a>
-<div class="flex gap-7 size-h5 size-base-on-mobile margin-top-3">
-    <ul class="list list-gap-2">
-        {{ range .Repository.Issues }}
-        <li {{ dynamicRelativeTimeAttrs .CreatedAt }}></li>
+</file>
+
+<file path="internal/glance/templates/rss-horizontal-cards-2.html">
+{{ template "widget-base.html" . }}
+{{ define "widget-content-classes" }}widget-content-frameless{{ end }}
+{{ define "widget-content" }}
+{{ if gt (len .Items) 0 }}
+<div class="carousel-container">
+    <div class="cards-horizontal carousel-items-container"{{ if ne 0.0 .CardHeight }} style="--rss-card-height: {{ .CardHeight }}rem;"{{ end }}>
+        {{ range .Items }}
+        <div class="card rss-card-2 widget-content-frame thumbnail-parent">
+            {{ if ne "" .ImageURL }}
+            <img class="rss-card-2-image thumbnail" loading="lazy" src="{{ .ImageURL }}" alt="">
+            {{ else }}
+            <svg class="rss-card-2-image" style="transform: scale(0.35) translateY(-25%)" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="var(--color-text-subdue)">
+                <path stroke-linecap="round" stroke-linejoin="round" d="m2.25 15.75 5.159-5.159a2.25 2.25 0 0 1 3.182 0l5.159 5.159m-1.5-1.5 1.409-1.409a2.25 2.25 0 0 1 3.182 0l2.909 2.909m-18 3.75h16.5a1.5 1.5 0 0 0 1.5-1.5V6a1.5 1.5 0 0 0-1.5-1.5H3.75A1.5 1.5 0 0 0 2.25 6v12a1.5 1.5 0 0 0 1.5 1.5Zm10.5-11.25h.008v.008h-.008V8.25Zm.375 0a.375.375 0 1 1-.75 0 .375.375 0 0 1 .75 0Z" />
+            </svg>
+            {{ end }}
+            <div class="rss-card-2-content padding-inline-widget">
+                <a href="{{ .Link }}" class="block text-truncate color-primary-if-not-visited" target="_blank" rel="noreferrer">{{ .Title }}</a>
+                <ul class="list-horizontal-text flex-nowrap margin-top-5">
+                    <li class="shrink-0" {{ dynamicRelativeTimeAttrs .PublishedAt }}></li>
+                    <li class="min-width-0 text-truncate">{{ .ChannelName }}</li>
+                </ul>
+            </div>
+        </div>
         {{ end }}
-    </ul>
-    <ul class="list list-gap-2 min-width-0">
-        {{ range .Repository.Issues }}
-        <li><a class="color-primary-if-not-visited text-truncate block" target="_blank" rel="noreferrer" href="https://github.com/{{ $.Repository.Name }}/issues/{{ .Number }}">{{ .Title }}</a></li>
-        {{ end }}
-    </ul>
+    </div>
 </div>
+{{ else }}
+<div class="widget-content-frame padding-widget">{{ .NoItemsMessage }}</div>
 {{ end }}
+{{ end }}
+</file>
+
+<file path="internal/glance/templates/rss-horizontal-cards.html">
+{{ template "widget-base.html" . }}
+{{ define "widget-content-classes" }}widget-content-frameless{{ end }}
+{{ define "widget-content" }}
+{{ if gt (len .Items) 0 }}
+<div class="carousel-container">
+    <div class="cards-horizontal carousel-items-container"{{ if ne 0.0 .ThumbnailHeight }} style="--rss-thumbnail-height: {{ .ThumbnailHeight }}rem;"{{ end }}>
+        {{ range .Items }}
+        <div class="card widget-content-frame thumbnail-parent">
+            {{ if ne "" .ImageURL }}
+            <img class="rss-card-image thumbnail" loading="lazy" src="{{ .ImageURL }}" alt="">
+            {{ else }}
+            <svg class="rss-card-image" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="var(--color-text-subdue)">
+                <path stroke-linecap="round" stroke-linejoin="round" d="m2.25 15.75 5.159-5.159a2.25 2.25 0 0 1 3.182 0l5.159 5.159m-1.5-1.5 1.409-1.409a2.25 2.25 0 0 1 3.182 0l2.909 2.909m-18 3.75h16.5a1.5 1.5 0 0 0 1.5-1.5V6a1.5 1.5 0 0 0-1.5-1.5H3.75A1.5 1.5 0 0 0 2.25 6v12a1.5 1.5 0 0 0 1.5 1.5Zm10.5-11.25h.008v.008h-.008V8.25Zm.375 0a.375.375 0 1 1-.75 0 .375.375 0 0 1 .75 0Z" />
+            </svg>
+            {{ end }}
+            <div class="margin-bottom-widget padding-inline-widget flex flex-column grow">
+                <a href="{{ .Link }}" class="text-truncate-3-lines color-primary-if-not-visited margin-top-10 margin-bottom-auto" target="_blank" rel="noreferrer">{{ .Title }}</a>
+                <ul class="list-horizontal-text flex-nowrap margin-top-7">
+                    <li class="shrink-0" {{ dynamicRelativeTimeAttrs .PublishedAt }}></li>
+                    <li class="min-width-0 text-truncate">{{ .ChannelName }}</li>
+                </ul>
+            </div>
+        </div>
+        {{ end }}
+    </div>
+</div>
+{{ else }}
+<div class="widget-content-frame padding-widget">{{ .NoItemsMessage }}</div>
+{{ end }}
+{{ end }}
+</file>
+
+<file path="internal/glance/templates/rss-list.html">
+{{ template "widget-base.html" . }}
+{{ define "widget-content" }}
+<ul class="list list-gap-14 collapsible-container{{ if .SingleLineTitles }} single-line-titles{{ end }}" data-collapse-after="{{ .CollapseAfter }}">
+    {{ range .Items }}
+    <li>
+        <a class="title size-title-dynamic color-primary-if-not-visited" href="{{ .Link }}" target="_blank" rel="noreferrer">{{ .Title }}</a>
+        <ul class="list-horizontal-text flex-nowrap">
+            <li {{ dynamicRelativeTimeAttrs .PublishedAt }}></li>
+            <li class="min-width-0">
+                <a class="block text-truncate" href="{{ .ChannelURL }}" target="_blank" rel="noreferrer">{{ .ChannelName }}</a>
+            </li>
+        </ul>
+    </li>
+    {{ else }}
+    <li>{{ .NoItemsMessage }}</li>
+    {{ end }}
+</ul>
 {{ end }}
 </file>
 
@@ -3733,32 +1792,15 @@ func (h *hub) handleWebSocket(w http.ResponseWriter, r *http.Request) {
 {{- end }}
 </file>
 
-<file path="internal/glance/templates/theme-preset-preview.html">
-{{- $background := "hsl(240, 8%, 9%)" | safeCSS }}
-{{- $primary := "hsl(43, 50%, 70%)" | safeCSS  }}
-{{- $positive := "hsl(43, 50%, 70%)" | safeCSS }}
-{{- $negative := "hsl(0, 70%, 70%)" | safeCSS }}
-{{- if .BackgroundColor }}{{ $background = .BackgroundColor.String | safeCSS }}{{ end }}
-{{- if .PrimaryColor }}
-    {{- $primary = .PrimaryColor.String | safeCSS }}
-    {{- if not .PositiveColor }}
-        {{- $positive = $primary }}
-    {{- else }}
-        {{- $positive = .PositiveColor.String | safeCSS }}
-    {{- end }}
-{{- end }}
-{{- if .NegativeColor }}{{ $negative = .NegativeColor.String | safeCSS }}{{ end }}
-<button class="theme-preset{{ if .Light }} theme-preset-light{{ end }}" style="--color: {{ $background }}" data-key="{{ .Key }}">
-    <div class="theme-color" style="--color: {{ $primary }}"></div>
-    <div class="theme-color" style="--color: {{ $positive }}"></div>
-    <div class="theme-color" style="--color: {{ $negative }}"></div>
-</button>
-</file>
-
-<file path="internal/glance/templates/todo.html">
+<file path="internal/glance/templates/split-column.html">
 {{ template "widget-base.html" . }}
+{{ define "widget-content-classes" }}widget-content-frameless{{ end }}
 {{ define "widget-content" }}
-<div class="todo" data-todo-id="{{ .TodoID }}"></div>
+<div class="masonry" data-max-columns="{{ .MaxColumns }}">
+{{ range .Widgets }}
+    {{ .Render }}
+{{ end }}
+</div>
 {{ end }}
 </file>
 
@@ -3884,17 +1926,63 @@ func (h *hub) handleWebSocket(w http.ResponseWriter, r *http.Request) {
 </html>
 </file>
 
-<file path="internal/glance/templates/video-card-contents.html">
-{{ define "video-card-contents" }}
-<img class="video-thumbnail thumbnail" loading="lazy" src="{{ .ThumbnailUrl }}" alt="">
-<div class="margin-top-10 margin-bottom-widget flex flex-column grow padding-inline-widget">
-    <a class="text-truncate-2-lines margin-bottom-auto color-primary-if-not-visited" href="{{ .Url | safeURL }}" target="_blank" rel="noreferrer">{{ .Title }}</a>
-    <ul class="list-horizontal-text flex-nowrap margin-top-7">
-        <li class="shrink-0" {{ dynamicRelativeTimeAttrs .TimePosted }}></li>
-        <li class="min-width-0">
-            <a class="block text-truncate" href="{{ .AuthorUrl }}" target="_blank" rel="noreferrer">{{ .Author }}</a>
-        </li>
-    </ul>
+<file path="internal/glance/templates/videos-grid.html">
+{{ template "widget-base.html" . }}
+{{ define "widget-content-classes" }}widget-content-frameless{{ end }}
+{{ define "widget-content" }}
+<div class="cards-grid collapsible-container" data-collapse-after-rows="{{ .CollapseAfterRows }}">
+    {{ range .Videos }}
+    <div class="card widget-content-frame thumbnail-parent">
+        {{ template "video-card-contents" . }}
+    </div>
+    {{ end }}
+</div>
+{{ end }}
+</file>
+
+<file path="internal/glance/templates/videos.html">
+{{ template "widget-base.html" . }}
+{{ define "widget-content-classes" }}widget-content-frameless{{ end }}
+{{ define "widget-content" }}
+<div class="carousel-container">
+    <div class="cards-horizontal carousel-items-container">
+        {{ range .Videos }}
+        <div class="card widget-content-frame thumbnail-parent">
+            {{ template "video-card-contents" . }}
+        </div>
+        {{ end }}
+    </div>
+</div>
+{{ end }}
+</file>
+
+<file path="internal/glance/templates/weather.html">
+{{ template "widget-base.html" . }}
+{{ define "widget-content" }}
+<div class="widget-small-content-bounds">
+    <div class="size-h2 color-highlight text-center">{{ .Weather.WeatherCodeAsString }}</div>
+    <div class="size-h4 text-center">Feels like {{ .Weather.ApparentTemperature }}°{{ if eq .Units "metric" }}C{{ else }}F{{ end }}</div>
+    <div class="weather-columns flex margin-top-15 justify-center">
+        {{ range $i, $column := .Weather.Columns }}
+        <div class="weather-column{{ if eq $i $.Weather.CurrentColumn }} weather-column-current{{ end }}">
+            {{ if $column.HasPrecipitation }}
+            <div class="weather-column-rain"></div>
+            {{ end }}
+            {{ if and (ge $i $.Weather.SunriseColumn) (le $i $.Weather.SunsetColumn ) }}
+            <div class="weather-column-daylight{{ if eq $i $.Weather.SunriseColumn }} weather-column-daylight-sunrise{{ else if eq $i $.Weather.SunsetColumn }} weather-column-daylight-sunset{{ end }}"></div>
+            {{ end }}
+            <div class="weather-column-value{{ if lt $column.Temperature 0 }} weather-column-value-negative{{ end }}">{{ $column.Temperature | absInt }}</div>
+            <div class="weather-bar" style='--weather-bar-height: {{ printf "%.2f" $column.Scale }}'></div>
+            <div class="weather-column-time">{{ index $.TimeLabels $i }}</div>
+        </div>
+        {{ end }}
+    </div>
+    {{ if not .HideLocation }}
+    <div class="flex items-center justify-center margin-top-15 gap-7 size-h5">
+        <div class="location-icon"></div>
+        <div class="text-truncate">{{ .Place.Name }},{{ if .ShowAreaName }} {{ .Place.Area }},{{ end }} {{ .Place.Country }}</div>
+    </div>
+    {{ end }}
 </div>
 {{ end }}
 </file>
@@ -4005,6 +2093,248 @@ func (widget *calendarWidget) initialize() error {
 }
 func (widget *calendarWidget) Render() template.HTML {
 	return widget.cachedHTML
+}
+</file>
+
+<file path="internal/glance/widget-changedetection.go">
+package glance
+import (
+	"context"
+	"fmt"
+	"html/template"
+	"log/slog"
+	"net/http"
+	"sort"
+	"strings"
+	"time"
+)
+var changeDetectionWidgetTemplate = mustParseTemplate("change-detection.html", "widget-base.html")
+type changeDetectionWidget struct {
+	widgetBase       `yaml:",inline"`
+	ChangeDetections changeDetectionWatchList `yaml:"-"`
+	WatchUUIDs       []string                 `yaml:"watches"`
+	InstanceURL      string                   `yaml:"instance-url"`
+	Token            string                   `yaml:"token"`
+	Limit            int                      `yaml:"limit"`
+	CollapseAfter    int                      `yaml:"collapse-after"`
+}
+func (widget *changeDetectionWidget) initialize() error {
+	widget.withTitle("Change Detection").withCacheDuration(1 * time.Hour)
+	if widget.Limit <= 0 {
+		widget.Limit = 10
+	}
+	if widget.CollapseAfter == 0 || widget.CollapseAfter < -1 {
+		widget.CollapseAfter = 5
+	}
+	if widget.InstanceURL == "" {
+		widget.InstanceURL = "https://www.changedetection.io"
+	}
+	return nil
+}
+func (widget *changeDetectionWidget) update(ctx context.Context) {
+	if len(widget.WatchUUIDs) == 0 {
+		uuids, err := fetchWatchUUIDsFromChangeDetection(widget.InstanceURL, string(widget.Token))
+		if !widget.canContinueUpdateAfterHandlingErr(err) {
+			return
+		}
+		widget.WatchUUIDs = uuids
+	}
+	watches, err := fetchWatchesFromChangeDetection(widget.InstanceURL, widget.WatchUUIDs, string(widget.Token))
+	if !widget.canContinueUpdateAfterHandlingErr(err) {
+		return
+	}
+	if len(watches) > widget.Limit {
+		watches = watches[:widget.Limit]
+	}
+	widget.ChangeDetections = watches
+}
+func (widget *changeDetectionWidget) Render() template.HTML {
+	return widget.renderTemplate(widget, changeDetectionWidgetTemplate)
+}
+type changeDetectionWatch struct {
+	Title        string
+	URL          string
+	LastChanged  time.Time
+	DiffURL      string
+	PreviousHash string
+}
+type changeDetectionWatchList []changeDetectionWatch
+func (r changeDetectionWatchList) sortByNewest() changeDetectionWatchList {
+	sort.Slice(r, func(i, j int) bool {
+		return r[i].LastChanged.After(r[j].LastChanged)
+	})
+	return r
+}
+type changeDetectionResponseJson struct {
+	Title        string `json:"title"`
+	URL          string `json:"url"`
+	LastChanged  int64  `json:"last_changed"`
+	DateCreated  int64  `json:"date_created"`
+	PreviousHash string `json:"previous_md5"`
+}
+func fetchWatchUUIDsFromChangeDetection(instanceURL string, token string) ([]string, error) {
+	request, _ := http.NewRequest("GET", fmt.Sprintf("%s/api/v1/watch", instanceURL), nil)
+	if token != "" {
+		request.Header.Add("x-api-key", token)
+	}
+	uuidsMap, err := decodeJsonFromRequest[map[string]struct{}](defaultHTTPClient, request)
+	if err != nil {
+		return nil, fmt.Errorf("could not fetch list of watch UUIDs: %v", err)
+	}
+	uuids := make([]string, 0, len(uuidsMap))
+	for uuid := range uuidsMap {
+		uuids = append(uuids, uuid)
+	}
+	return uuids, nil
+}
+func fetchWatchesFromChangeDetection(instanceURL string, requestedWatchIDs []string, token string) (changeDetectionWatchList, error) {
+	watches := make(changeDetectionWatchList, 0, len(requestedWatchIDs))
+	if len(requestedWatchIDs) == 0 {
+		return watches, nil
+	}
+	requests := make([]*http.Request, len(requestedWatchIDs))
+	for i, repository := range requestedWatchIDs {
+		request, _ := http.NewRequest("GET", fmt.Sprintf("%s/api/v1/watch/%s", instanceURL, repository), nil)
+		if token != "" {
+			request.Header.Add("x-api-key", token)
+		}
+		requests[i] = request
+	}
+	task := decodeJsonFromRequestTask[changeDetectionResponseJson](defaultHTTPClient)
+	job := newJob(task, requests).withWorkers(15)
+	responses, errs, err := workerPoolDo(job)
+	if err != nil {
+		return nil, err
+	}
+	var failed int
+	for i := range responses {
+		if errs[i] != nil {
+			failed++
+			slog.Error("Failed to fetch or parse change detection watch", "url", requests[i].URL, "error", errs[i])
+			continue
+		}
+		watchJson := responses[i]
+		watch := changeDetectionWatch{
+			URL:     watchJson.URL,
+			DiffURL: fmt.Sprintf("%s/diff/%s?from_version=%d", instanceURL, requestedWatchIDs[i], watchJson.LastChanged-1),
+		}
+		if watchJson.LastChanged == 0 {
+			watch.LastChanged = time.Unix(watchJson.DateCreated, 0)
+		} else {
+			watch.LastChanged = time.Unix(watchJson.LastChanged, 0)
+		}
+		if watchJson.Title != "" {
+			watch.Title = watchJson.Title
+		} else {
+			watch.Title = strings.TrimPrefix(strings.Trim(stripURLScheme(watchJson.URL), "/"), "www.")
+		}
+		if watchJson.PreviousHash != "" {
+			var hashLength = 8
+			if len(watchJson.PreviousHash) < hashLength {
+				hashLength = len(watchJson.PreviousHash)
+			}
+			watch.PreviousHash = watchJson.PreviousHash[0:hashLength]
+		}
+		watches = append(watches, watch)
+	}
+	if len(watches) == 0 {
+		return nil, errNoContent
+	}
+	watches.sortByNewest()
+	if failed > 0 {
+		return watches, fmt.Errorf("%w: could not get %d watches", errPartialContent, failed)
+	}
+	return watches, nil
+}
+</file>
+
+<file path="internal/glance/widget-clock.go">
+package glance
+import (
+	"errors"
+	"fmt"
+	"html/template"
+	"time"
+)
+var clockWidgetTemplate = mustParseTemplate("clock.html", "widget-base.html")
+type clockWidget struct {
+	widgetBase `yaml:",inline"`
+	cachedHTML template.HTML `yaml:"-"`
+	HourFormat string        `yaml:"hour-format"`
+	Timezones  []struct {
+		Timezone string `yaml:"timezone"`
+		Label    string `yaml:"label"`
+	} `yaml:"timezones"`
+}
+func (widget *clockWidget) initialize() error {
+	widget.withTitle("Clock").withError(nil)
+	if widget.HourFormat == "" {
+		widget.HourFormat = "24h"
+	} else if widget.HourFormat != "12h" && widget.HourFormat != "24h" {
+		return errors.New("hour-format must be either 12h or 24h")
+	}
+	for t := range widget.Timezones {
+		if widget.Timezones[t].Timezone == "" {
+			return errors.New("missing timezone value")
+		}
+		if _, err := time.LoadLocation(widget.Timezones[t].Timezone); err != nil {
+			return fmt.Errorf("invalid timezone '%s': %v", widget.Timezones[t].Timezone, err)
+		}
+	}
+	widget.cachedHTML = widget.renderTemplate(widget, clockWidgetTemplate)
+	return nil
+}
+func (widget *clockWidget) Render() template.HTML {
+	return widget.cachedHTML
+}
+</file>
+
+<file path="internal/glance/widget-container.go">
+package glance
+import (
+	"context"
+	"sync"
+	"time"
+)
+type containerWidgetBase struct {
+	Widgets widgets `yaml:"widgets"`
+}
+func (widget *containerWidgetBase) _initializeWidgets() error {
+	for i := range widget.Widgets {
+		if err := widget.Widgets[i].initialize(); err != nil {
+			return formatWidgetInitError(err, widget.Widgets[i])
+		}
+	}
+	return nil
+}
+func (widget *containerWidgetBase) _update(ctx context.Context) {
+	var wg sync.WaitGroup
+	now := time.Now()
+	for w := range widget.Widgets {
+		widget := widget.Widgets[w]
+		if !widget.requiresUpdate(&now) {
+			continue
+		}
+		wg.Add(1)
+		go func() {
+			defer wg.Done()
+			widget.update(ctx)
+		}()
+	}
+	wg.Wait()
+}
+func (widget *containerWidgetBase) _setProviders(providers *widgetProviders) {
+	for i := range widget.Widgets {
+		widget.Widgets[i].setProviders(providers)
+	}
+}
+func (widget *containerWidgetBase) _requiresUpdate(now *time.Time) bool {
+	for i := range widget.Widgets {
+		if widget.Widgets[i].requiresUpdate(now) {
+			return true
+		}
+	}
+	return false
 }
 </file>
 
@@ -5134,6 +3464,347 @@ func fetchExtension(options extensionRequestOptions) (extension, error) {
 }
 </file>
 
+<file path="internal/glance/widget-group.go">
+package glance
+import (
+	"context"
+	"errors"
+	"html/template"
+	"time"
+)
+var groupWidgetTemplate = mustParseTemplate("group.html", "widget-base.html")
+type groupWidget struct {
+	widgetBase          `yaml:",inline"`
+	containerWidgetBase `yaml:",inline"`
+}
+func (widget *groupWidget) initialize() error {
+	widget.withError(nil)
+	widget.HideHeader = true
+	for i := range widget.Widgets {
+		widget.Widgets[i].setHideHeader(true)
+		if widget.Widgets[i].GetType() == "group" {
+			return errors.New("nested groups are not supported")
+		} else if widget.Widgets[i].GetType() == "split-column" {
+			return errors.New("split columns inside of groups are not supported")
+		}
+	}
+	if err := widget.containerWidgetBase._initializeWidgets(); err != nil {
+		return err
+	}
+	return nil
+}
+func (widget *groupWidget) update(ctx context.Context) {
+	widget.containerWidgetBase._update(ctx)
+}
+func (widget *groupWidget) setProviders(providers *widgetProviders) {
+	widget.containerWidgetBase._setProviders(providers)
+}
+func (widget *groupWidget) requiresUpdate(now *time.Time) bool {
+	return widget.containerWidgetBase._requiresUpdate(now)
+}
+func (widget *groupWidget) Render() template.HTML {
+	return widget.renderTemplate(widget, groupWidgetTemplate)
+}
+</file>
+
+<file path="internal/glance/widget-hacker-news.go">
+package glance
+import (
+	"context"
+	"fmt"
+	"html/template"
+	"log/slog"
+	"net/http"
+	"strconv"
+	"strings"
+	"time"
+)
+type hackerNewsWidget struct {
+	widgetBase          `yaml:",inline"`
+	Posts               forumPostList `yaml:"-"`
+	Limit               int           `yaml:"limit"`
+	SortBy              string        `yaml:"sort-by"`
+	ExtraSortBy         string        `yaml:"extra-sort-by"`
+	CollapseAfter       int           `yaml:"collapse-after"`
+	CommentsUrlTemplate string        `yaml:"comments-url-template"`
+	ShowThumbnails      bool          `yaml:"-"`
+}
+func (widget *hackerNewsWidget) initialize() error {
+	widget.
+		withTitle("Hacker News").
+		withTitleURL("https://news.ycombinator.com/").
+		withCacheDuration(30 * time.Minute)
+	if widget.Limit <= 0 {
+		widget.Limit = 15
+	}
+	if widget.CollapseAfter == 0 || widget.CollapseAfter < -1 {
+		widget.CollapseAfter = 5
+	}
+	if widget.SortBy != "top" && widget.SortBy != "new" && widget.SortBy != "best" {
+		widget.SortBy = "top"
+	}
+	return nil
+}
+func (widget *hackerNewsWidget) update(ctx context.Context) {
+	posts, err := fetchHackerNewsPosts(widget.SortBy, 40, widget.CommentsUrlTemplate)
+	if !widget.canContinueUpdateAfterHandlingErr(err) {
+		return
+	}
+	if widget.ExtraSortBy == "engagement" {
+		posts.calculateEngagement()
+		posts.sortByEngagement()
+	}
+	if widget.Limit < len(posts) {
+		posts = posts[:widget.Limit]
+	}
+	widget.Posts = posts
+}
+func (widget *hackerNewsWidget) Render() template.HTML {
+	return widget.renderTemplate(widget, forumPostsTemplate)
+}
+type hackerNewsPostResponseJson struct {
+	Id           int    `json:"id"`
+	Score        int    `json:"score"`
+	Title        string `json:"title"`
+	TargetUrl    string `json:"url,omitempty"`
+	CommentCount int    `json:"descendants"`
+	TimePosted   int64  `json:"time"`
+}
+func fetchHackerNewsPostIds(sort string) ([]int, error) {
+	request, _ := http.NewRequest("GET", fmt.Sprintf("https://hacker-news.firebaseio.com/v0/%sstories.json", sort), nil)
+	response, err := decodeJsonFromRequest[[]int](defaultHTTPClient, request)
+	if err != nil {
+		return nil, fmt.Errorf("%w: could not fetch list of post IDs", errNoContent)
+	}
+	return response, nil
+}
+func fetchHackerNewsPostsFromIds(postIds []int, commentsUrlTemplate string) (forumPostList, error) {
+	requests := make([]*http.Request, len(postIds))
+	for i, id := range postIds {
+		request, _ := http.NewRequest("GET", fmt.Sprintf("https://hacker-news.firebaseio.com/v0/item/%d.json", id), nil)
+		requests[i] = request
+	}
+	task := decodeJsonFromRequestTask[hackerNewsPostResponseJson](defaultHTTPClient)
+	job := newJob(task, requests).withWorkers(30)
+	results, errs, err := workerPoolDo(job)
+	if err != nil {
+		return nil, err
+	}
+	posts := make(forumPostList, 0, len(postIds))
+	for i := range results {
+		if errs[i] != nil {
+			slog.Error("Failed to fetch or parse hacker news post", "error", errs[i], "url", requests[i].URL)
+			continue
+		}
+		var commentsUrl string
+		if commentsUrlTemplate == "" {
+			commentsUrl = "https://news.ycombinator.com/item?id=" + strconv.Itoa(results[i].Id)
+		} else {
+			commentsUrl = strings.ReplaceAll(commentsUrlTemplate, "{POST-ID}", strconv.Itoa(results[i].Id))
+		}
+		posts = append(posts, forumPost{
+			Title:           results[i].Title,
+			DiscussionUrl:   commentsUrl,
+			TargetUrl:       results[i].TargetUrl,
+			TargetUrlDomain: extractDomainFromUrl(results[i].TargetUrl),
+			CommentCount:    results[i].CommentCount,
+			Score:           results[i].Score,
+			TimePosted:      time.Unix(results[i].TimePosted, 0),
+		})
+	}
+	if len(posts) == 0 {
+		return nil, errNoContent
+	}
+	if len(posts) != len(postIds) {
+		return posts, fmt.Errorf("%w could not fetch some hacker news posts", errPartialContent)
+	}
+	return posts, nil
+}
+func fetchHackerNewsPosts(sort string, limit int, commentsUrlTemplate string) (forumPostList, error) {
+	postIds, err := fetchHackerNewsPostIds(sort)
+	if err != nil {
+		return nil, err
+	}
+	if len(postIds) > limit {
+		postIds = postIds[:limit]
+	}
+	return fetchHackerNewsPostsFromIds(postIds, commentsUrlTemplate)
+}
+</file>
+
+<file path="internal/glance/widget-html.go">
+package glance
+import (
+	"html/template"
+)
+type htmlWidget struct {
+	widgetBase `yaml:",inline"`
+	Source     template.HTML `yaml:"source"`
+}
+func (widget *htmlWidget) initialize() error {
+	widget.withTitle("").withError(nil)
+	return nil
+}
+func (widget *htmlWidget) Render() template.HTML {
+	return widget.Source
+}
+</file>
+
+<file path="internal/glance/widget-iframe.go">
+package glance
+import (
+	"errors"
+	"fmt"
+	"html/template"
+	"net/url"
+)
+var iframeWidgetTemplate = mustParseTemplate("iframe.html", "widget-base.html")
+type iframeWidget struct {
+	widgetBase `yaml:",inline"`
+	cachedHTML template.HTML `yaml:"-"`
+	Source     string        `yaml:"source"`
+	Height     int           `yaml:"height"`
+}
+func (widget *iframeWidget) initialize() error {
+	widget.withTitle("IFrame").withError(nil)
+	if widget.Source == "" {
+		return errors.New("source is required")
+	}
+	if _, err := url.Parse(widget.Source); err != nil {
+		return fmt.Errorf("parsing URL: %v", err)
+	}
+	if widget.Height == 50 {
+		widget.Height = 300
+	} else if widget.Height < 50 {
+		widget.Height = 50
+	}
+	widget.cachedHTML = widget.renderTemplate(widget, iframeWidgetTemplate)
+	return nil
+}
+func (widget *iframeWidget) Render() template.HTML {
+	return widget.cachedHTML
+}
+</file>
+
+<file path="internal/glance/widget-lobsters.go">
+package glance
+import (
+	"context"
+	"html/template"
+	"net/http"
+	"strings"
+	"time"
+)
+type lobstersWidget struct {
+	widgetBase     `yaml:",inline"`
+	Posts          forumPostList `yaml:"-"`
+	InstanceURL    string        `yaml:"instance-url"`
+	CustomURL      string        `yaml:"custom-url"`
+	Limit          int           `yaml:"limit"`
+	CollapseAfter  int           `yaml:"collapse-after"`
+	SortBy         string        `yaml:"sort-by"`
+	Tags           []string      `yaml:"tags"`
+	ShowThumbnails bool          `yaml:"-"`
+}
+func (widget *lobstersWidget) initialize() error {
+	widget.withTitle("Lobsters").withCacheDuration(time.Hour)
+	if widget.InstanceURL == "" {
+		widget.withTitleURL("https://lobste.rs")
+	} else {
+		widget.withTitleURL(widget.InstanceURL)
+	}
+	if widget.SortBy == "" || (widget.SortBy != "hot" && widget.SortBy != "new") {
+		widget.SortBy = "hot"
+	}
+	if widget.Limit <= 0 {
+		widget.Limit = 15
+	}
+	if widget.CollapseAfter == 0 || widget.CollapseAfter < -1 {
+		widget.CollapseAfter = 5
+	}
+	return nil
+}
+func (widget *lobstersWidget) update(ctx context.Context) {
+	posts, err := fetchLobstersPosts(widget.CustomURL, widget.InstanceURL, widget.SortBy, widget.Tags)
+	if !widget.canContinueUpdateAfterHandlingErr(err) {
+		return
+	}
+	if widget.Limit < len(posts) {
+		posts = posts[:widget.Limit]
+	}
+	widget.Posts = posts
+}
+func (widget *lobstersWidget) Render() template.HTML {
+	return widget.renderTemplate(widget, forumPostsTemplate)
+}
+type lobstersPostResponseJson struct {
+	CreatedAt    string   `json:"created_at"`
+	Title        string   `json:"title"`
+	URL          string   `json:"url"`
+	Score        int      `json:"score"`
+	CommentCount int      `json:"comment_count"`
+	CommentsURL  string   `json:"comments_url"`
+	Tags         []string `json:"tags"`
+}
+type lobstersFeedResponseJson []lobstersPostResponseJson
+func fetchLobstersPostsFromFeed(feedUrl string) (forumPostList, error) {
+	request, err := http.NewRequest("GET", feedUrl, nil)
+	if err != nil {
+		return nil, err
+	}
+	feed, err := decodeJsonFromRequest[lobstersFeedResponseJson](defaultHTTPClient, request)
+	if err != nil {
+		return nil, err
+	}
+	posts := make(forumPostList, 0, len(feed))
+	for i := range feed {
+		createdAt, _ := time.Parse(time.RFC3339, feed[i].CreatedAt)
+		posts = append(posts, forumPost{
+			Title:           feed[i].Title,
+			DiscussionUrl:   feed[i].CommentsURL,
+			TargetUrl:       feed[i].URL,
+			TargetUrlDomain: extractDomainFromUrl(feed[i].URL),
+			CommentCount:    feed[i].CommentCount,
+			Score:           feed[i].Score,
+			TimePosted:      createdAt,
+			Tags:            feed[i].Tags,
+		})
+	}
+	if len(posts) == 0 {
+		return nil, errNoContent
+	}
+	return posts, nil
+}
+func fetchLobstersPosts(customURL string, instanceURL string, sortBy string, tags []string) (forumPostList, error) {
+	var feedUrl string
+	if customURL != "" {
+		feedUrl = customURL
+	} else {
+		if instanceURL != "" {
+			instanceURL = strings.TrimRight(instanceURL, "/") + "/"
+		} else {
+			instanceURL = "https://lobste.rs/"
+		}
+		if sortBy == "hot" {
+			sortBy = "hottest"
+		} else if sortBy == "new" {
+			sortBy = "newest"
+		}
+		if len(tags) == 0 {
+			feedUrl = instanceURL + sortBy + ".json"
+		} else {
+			tags := strings.Join(tags, ",")
+			feedUrl = instanceURL + "t/" + tags + ".json"
+		}
+	}
+	posts, err := fetchLobstersPostsFromFeed(feedUrl)
+	if err != nil {
+		return nil, err
+	}
+	return posts, nil
+}
+</file>
+
 <file path="internal/glance/widget-markets.go">
 package glance
 import (
@@ -6002,6 +4673,211 @@ func fetchLatestCodebergRelease(request *releaseRequest) (*appRelease, error) {
 }
 </file>
 
+<file path="internal/glance/widget-repository.go">
+package glance
+import (
+	"context"
+	"fmt"
+	"html/template"
+	"net/http"
+	"strings"
+	"sync"
+	"time"
+)
+var repositoryWidgetTemplate = mustParseTemplate("repository.html", "widget-base.html")
+type repositoryWidget struct {
+	widgetBase          `yaml:",inline"`
+	RequestedRepository string     `yaml:"repository"`
+	Token               string     `yaml:"token"`
+	PullRequestsLimit   int        `yaml:"pull-requests-limit"`
+	IssuesLimit         int        `yaml:"issues-limit"`
+	CommitsLimit        int        `yaml:"commits-limit"`
+	Repository          repository `yaml:"-"`
+}
+func (widget *repositoryWidget) initialize() error {
+	widget.withTitle("Repository").withCacheDuration(1 * time.Hour)
+	if widget.PullRequestsLimit == 0 || widget.PullRequestsLimit < -1 {
+		widget.PullRequestsLimit = 3
+	}
+	if widget.IssuesLimit == 0 || widget.IssuesLimit < -1 {
+		widget.IssuesLimit = 3
+	}
+	if widget.CommitsLimit == 0 || widget.CommitsLimit < -1 {
+		widget.CommitsLimit = -1
+	}
+	return nil
+}
+func (widget *repositoryWidget) update(ctx context.Context) {
+	details, err := fetchRepositoryDetailsFromGithub(
+		widget.RequestedRepository,
+		string(widget.Token),
+		widget.PullRequestsLimit,
+		widget.IssuesLimit,
+		widget.CommitsLimit,
+	)
+	if !widget.canContinueUpdateAfterHandlingErr(err) {
+		return
+	}
+	widget.Repository = details
+}
+func (widget *repositoryWidget) Render() template.HTML {
+	return widget.renderTemplate(widget, repositoryWidgetTemplate)
+}
+type repository struct {
+	Name             string
+	Stars            int
+	Forks            int
+	OpenPullRequests int
+	PullRequests     []githubTicket
+	OpenIssues       int
+	Issues           []githubTicket
+	LastCommits      int
+	Commits          []githubCommitDetails
+}
+type githubTicket struct {
+	Number    int
+	CreatedAt time.Time
+	Title     string
+}
+type githubCommitDetails struct {
+	Sha       string
+	Author    string
+	CreatedAt time.Time
+	Message   string
+}
+type githubRepositoryResponseJson struct {
+	Name  string `json:"full_name"`
+	Stars int    `json:"stargazers_count"`
+	Forks int    `json:"forks_count"`
+}
+type githubTicketResponseJson struct {
+	Count   int `json:"total_count"`
+	Tickets []struct {
+		Number    int    `json:"number"`
+		CreatedAt string `json:"created_at"`
+		Title     string `json:"title"`
+	} `json:"items"`
+}
+type gitHubCommitResponseJson struct {
+	Sha    string `json:"sha"`
+	Commit struct {
+		Author struct {
+			Name string `json:"name"`
+			Date string `json:"date"`
+		} `json:"author"`
+		Message string `json:"message"`
+	} `json:"commit"`
+}
+func fetchRepositoryDetailsFromGithub(repo string, token string, maxPRs int, maxIssues int, maxCommits int) (repository, error) {
+	repositoryRequest, err := http.NewRequest("GET", fmt.Sprintf("https://api.github.com/repos/%s", repo), nil)
+	if err != nil {
+		return repository{}, fmt.Errorf("%w: could not create request with repository: %v", errNoContent, err)
+	}
+	PRsRequest, _ := http.NewRequest("GET", fmt.Sprintf("https://api.github.com/search/issues?q=is:pr+is:open+repo:%s&per_page=%d", repo, maxPRs), nil)
+	issuesRequest, _ := http.NewRequest("GET", fmt.Sprintf("https://api.github.com/search/issues?q=is:issue+is:open+repo:%s&per_page=%d", repo, maxIssues), nil)
+	CommitsRequest, _ := http.NewRequest("GET", fmt.Sprintf("https://api.github.com/repos/%s/commits?per_page=%d", repo, maxCommits), nil)
+	if token != "" {
+		token = fmt.Sprintf("Bearer %s", token)
+		repositoryRequest.Header.Add("Authorization", token)
+		PRsRequest.Header.Add("Authorization", token)
+		issuesRequest.Header.Add("Authorization", token)
+		CommitsRequest.Header.Add("Authorization", token)
+	}
+	var repositoryResponse githubRepositoryResponseJson
+	var detailsErr error
+	var PRsResponse githubTicketResponseJson
+	var PRsErr error
+	var issuesResponse githubTicketResponseJson
+	var issuesErr error
+	var commitsResponse []gitHubCommitResponseJson
+	var CommitsErr error
+	var wg sync.WaitGroup
+	wg.Add(1)
+	go (func() {
+		defer wg.Done()
+		repositoryResponse, detailsErr = decodeJsonFromRequest[githubRepositoryResponseJson](defaultHTTPClient, repositoryRequest)
+	})()
+	if maxPRs > 0 {
+		wg.Add(1)
+		go (func() {
+			defer wg.Done()
+			PRsResponse, PRsErr = decodeJsonFromRequest[githubTicketResponseJson](defaultHTTPClient, PRsRequest)
+		})()
+	}
+	if maxIssues > 0 {
+		wg.Add(1)
+		go (func() {
+			defer wg.Done()
+			issuesResponse, issuesErr = decodeJsonFromRequest[githubTicketResponseJson](defaultHTTPClient, issuesRequest)
+		})()
+	}
+	if maxCommits > 0 {
+		wg.Add(1)
+		go (func() {
+			defer wg.Done()
+			commitsResponse, CommitsErr = decodeJsonFromRequest[[]gitHubCommitResponseJson](defaultHTTPClient, CommitsRequest)
+		})()
+	}
+	wg.Wait()
+	if detailsErr != nil {
+		return repository{}, fmt.Errorf("%w: could not get repository details: %s", errNoContent, detailsErr)
+	}
+	details := repository{
+		Name:         repositoryResponse.Name,
+		Stars:        repositoryResponse.Stars,
+		Forks:        repositoryResponse.Forks,
+		PullRequests: make([]githubTicket, 0, len(PRsResponse.Tickets)),
+		Issues:       make([]githubTicket, 0, len(issuesResponse.Tickets)),
+		Commits:      make([]githubCommitDetails, 0, len(commitsResponse)),
+	}
+	err = nil
+	if maxPRs > 0 {
+		if PRsErr != nil {
+			err = fmt.Errorf("%w: could not get PRs: %s", errPartialContent, PRsErr)
+		} else {
+			details.OpenPullRequests = PRsResponse.Count
+			for i := range PRsResponse.Tickets {
+				details.PullRequests = append(details.PullRequests, githubTicket{
+					Number:    PRsResponse.Tickets[i].Number,
+					CreatedAt: parseRFC3339Time(PRsResponse.Tickets[i].CreatedAt),
+					Title:     PRsResponse.Tickets[i].Title,
+				})
+			}
+		}
+	}
+	if maxIssues > 0 {
+		if issuesErr != nil {
+			// TODO: fix, overwriting the previous error
+			err = fmt.Errorf("%w: could not get issues: %s", errPartialContent, issuesErr)
+		} else {
+			details.OpenIssues = issuesResponse.Count
+			for i := range issuesResponse.Tickets {
+				details.Issues = append(details.Issues, githubTicket{
+					Number:    issuesResponse.Tickets[i].Number,
+					CreatedAt: parseRFC3339Time(issuesResponse.Tickets[i].CreatedAt),
+					Title:     issuesResponse.Tickets[i].Title,
+				})
+			}
+		}
+	}
+	if maxCommits > 0 {
+		if CommitsErr != nil {
+			err = fmt.Errorf("%w: could not get commits: %s", errPartialContent, CommitsErr)
+		} else {
+			for i := range commitsResponse {
+				details.Commits = append(details.Commits, githubCommitDetails{
+					Sha:       commitsResponse[i].Sha,
+					Author:    commitsResponse[i].Commit.Author.Name,
+					CreatedAt: parseRFC3339Time(commitsResponse[i].Commit.Author.Date),
+					Message:   strings.SplitN(commitsResponse[i].Commit.Message, "\n\n", 2)[0],
+				})
+			}
+		}
+	}
+	return details, err
+}
+</file>
+
 <file path="internal/glance/widget-rss.go">
 package glance
 import (
@@ -6391,6 +5267,96 @@ func (widget *searchWidget) Render() template.HTML {
 }
 </file>
 
+<file path="internal/glance/widget-shared.go">
+package glance
+import (
+	"math"
+	"sort"
+	"time"
+)
+const twitchGqlEndpoint = "https://gql.twitch.tv/gql"
+const twitchGqlClientId = "kimne78kx3ncx6brgo4mv6wki5h1ko"
+var forumPostsTemplate = mustParseTemplate("forum-posts.html", "widget-base.html")
+type forumPost struct {
+	Title           string
+	DiscussionUrl   string
+	TargetUrl       string
+	TargetUrlDomain string
+	ThumbnailUrl    string
+	CommentCount    int
+	Score           int
+	Engagement      float64
+	TimePosted      time.Time
+	Tags            []string
+	IsCrosspost     bool
+}
+type forumPostList []forumPost
+const depreciatePostsOlderThanHours = 7
+const maxDepreciation = 0.9
+const maxDepreciationAfterHours = 24
+func (p forumPostList) calculateEngagement() {
+	var totalComments int
+	var totalScore int
+	for i := range p {
+		totalComments += p[i].CommentCount
+		totalScore += p[i].Score
+	}
+	numberOfPosts := float64(len(p))
+	averageComments := float64(totalComments) / numberOfPosts
+	averageScore := float64(totalScore) / numberOfPosts
+	for i := range p {
+		p[i].Engagement = (float64(p[i].CommentCount)/averageComments + float64(p[i].Score)/averageScore) / 2
+		elapsed := time.Since(p[i].TimePosted)
+		if elapsed < time.Hour*depreciatePostsOlderThanHours {
+			continue
+		}
+		p[i].Engagement *= 1.0 - (math.Max(elapsed.Hours()-depreciatePostsOlderThanHours, maxDepreciationAfterHours)/maxDepreciationAfterHours)*maxDepreciation
+	}
+}
+func (p forumPostList) sortByEngagement() {
+	sort.Slice(p, func(i, j int) bool {
+		return p[i].Engagement > p[j].Engagement
+	})
+}
+</file>
+
+<file path="internal/glance/widget-split-column.go">
+package glance
+import (
+	"context"
+	"html/template"
+	"time"
+)
+var splitColumnWidgetTemplate = mustParseTemplate("split-column.html", "widget-base.html")
+type splitColumnWidget struct {
+	widgetBase          `yaml:",inline"`
+	containerWidgetBase `yaml:",inline"`
+	MaxColumns          int `yaml:"max-columns"`
+}
+func (widget *splitColumnWidget) initialize() error {
+	widget.withError(nil).withTitle("Split Column").setHideHeader(true)
+	if err := widget.containerWidgetBase._initializeWidgets(); err != nil {
+		return err
+	}
+	if widget.MaxColumns < 2 {
+		widget.MaxColumns = 2
+	}
+	return nil
+}
+func (widget *splitColumnWidget) update(ctx context.Context) {
+	widget.containerWidgetBase._update(ctx)
+}
+func (widget *splitColumnWidget) setProviders(providers *widgetProviders) {
+	widget.containerWidgetBase._setProviders(providers)
+}
+func (widget *splitColumnWidget) requiresUpdate(now *time.Time) bool {
+	return widget.containerWidgetBase._requiresUpdate(now)
+}
+func (widget *splitColumnWidget) Render() template.HTML {
+	return widget.renderTemplate(widget, splitColumnWidgetTemplate)
+}
+</file>
+
 <file path="internal/glance/widget-twitch-channels.go">
 package glance
 import (
@@ -6587,6 +5553,109 @@ func fetchChannelsFromTwitch(channelLogins []string) (twitchChannelList, error) 
 		return result, fmt.Errorf("%w: failed to fetch %d channels", errPartialContent, failed)
 	}
 	return result, nil
+}
+</file>
+
+<file path="internal/glance/widget-twitch-top-games.go">
+package glance
+import (
+	"context"
+	"errors"
+	"fmt"
+	"html/template"
+	"net/http"
+	"slices"
+	"strings"
+	"time"
+)
+var twitchGamesWidgetTemplate = mustParseTemplate("twitch-games-list.html", "widget-base.html")
+type twitchGamesWidget struct {
+	widgetBase    `yaml:",inline"`
+	Categories    []twitchCategory `yaml:"-"`
+	Exclude       []string         `yaml:"exclude"`
+	Limit         int              `yaml:"limit"`
+	CollapseAfter int              `yaml:"collapse-after"`
+}
+func (widget *twitchGamesWidget) initialize() error {
+	widget.
+		withTitle("Top games on Twitch").
+		withTitleURL("https://www.twitch.tv/directory?sort=VIEWER_COUNT").
+		withCacheDuration(time.Minute * 10)
+	if widget.Limit <= 0 {
+		widget.Limit = 10
+	}
+	if widget.CollapseAfter == 0 || widget.CollapseAfter < -1 {
+		widget.CollapseAfter = 5
+	}
+	return nil
+}
+func (widget *twitchGamesWidget) update(ctx context.Context) {
+	categories, err := fetchTopGamesFromTwitch(widget.Exclude, widget.Limit)
+	if !widget.canContinueUpdateAfterHandlingErr(err) {
+		return
+	}
+	widget.Categories = categories
+}
+func (widget *twitchGamesWidget) Render() template.HTML {
+	return widget.renderTemplate(widget, twitchGamesWidgetTemplate)
+}
+type twitchCategory struct {
+	Slug         string `json:"slug"`
+	Name         string `json:"name"`
+	AvatarUrl    string `json:"avatarURL"`
+	ViewersCount int    `json:"viewersCount"`
+	Tags         []struct {
+		Name string `json:"tagName"`
+	} `json:"tags"`
+	GameReleaseDate string `json:"originalReleaseDate"`
+	IsNew           bool   `json:"-"`
+}
+type twitchDirectoriesOperationResponse struct {
+	Data struct {
+		DirectoriesWithTags struct {
+			Edges []struct {
+				Node twitchCategory `json:"node"`
+			} `json:"edges"`
+		} `json:"directoriesWithTags"`
+	} `json:"data"`
+}
+const twitchDirectoriesOperationRequestBody = `[
+{"operationName": "BrowsePage_AllDirectories","variables": {"limit": %d,"options": {"sort": "VIEWER_COUNT","tags": []}},"extensions": {"persistedQuery": {"version": 1,"sha256Hash": "2f67f71ba89f3c0ed26a141ec00da1defecb2303595f5cda4298169549783d9e"}}}
+]`
+func fetchTopGamesFromTwitch(exclude []string, limit int) ([]twitchCategory, error) {
+	reader := strings.NewReader(fmt.Sprintf(twitchDirectoriesOperationRequestBody, len(exclude)+limit))
+	request, _ := http.NewRequest("POST", twitchGqlEndpoint, reader)
+	request.Header.Add("Client-ID", twitchGqlClientId)
+	response, err := decodeJsonFromRequest[[]twitchDirectoriesOperationResponse](defaultHTTPClient, request)
+	if err != nil {
+		return nil, err
+	}
+	if len(response) == 0 {
+		return nil, errors.New("no categories could be retrieved")
+	}
+	edges := (response)[0].Data.DirectoriesWithTags.Edges
+	categories := make([]twitchCategory, 0, len(edges))
+	for i := range edges {
+		if slices.Contains(exclude, edges[i].Node.Slug) {
+			continue
+		}
+		category := &edges[i].Node
+		category.AvatarUrl = strings.Replace(category.AvatarUrl, "285x380", "144x192", 1)
+		if len(category.Tags) > 2 {
+			category.Tags = category.Tags[:2]
+		}
+		gameReleasedDate, err := time.Parse("2006-01-02T15:04:05Z", category.GameReleaseDate)
+		if err == nil {
+			if time.Since(gameReleasedDate) < 14*24*time.Hour {
+				category.IsNew = true
+			}
+		}
+		categories = append(categories, *category)
+	}
+	if len(categories) > limit {
+		categories = categories[:limit]
+	}
+	return categories, nil
 }
 </file>
 
@@ -7040,17 +6109,6 @@ var weatherCodeTable = map[int]string{
 }
 </file>
 
-<file path="main.go">
-package main
-import (
-	"os"
-	"github.com/limpdev/banter/internal/glance"
-)
-func main() {
-	os.Exit(glance.Main())
-}
-</file>
-
 <file path="pkg/sysinfo/sysinfo.go">
 package sysinfo
 import (
@@ -7308,6 +6366,11 @@ func inferCPUTempSensor(sensors []sensors.TemperatureStat) *sensors.TemperatureS
 }
 </file>
 
+<file path=".github/FUNDING.yml">
+github: [glanceapp]
+patreon: glanceapp
+</file>
+
 <file path="docs/glance.yml">
 pages:
   - name: Home
@@ -7403,6 +6466,360 @@ pages:
   #     - size: small
   #       widgets:
   #         # Add widgets here
+</file>
+
+<file path="internal/glance/auth_test.go">
+package glance
+import (
+	"bytes"
+	"encoding/base64"
+	"testing"
+	"time"
+)
+func TestAuthTokenGenerationAndVerification(t *testing.T) {
+	secret, err := makeAuthSecretKey(AUTH_SECRET_KEY_LENGTH)
+	if err != nil {
+		t.Fatalf("Failed to generate secret key: %v", err)
+	}
+	secretBytes, err := base64.StdEncoding.DecodeString(secret)
+	if err != nil {
+		t.Fatalf("Failed to decode secret key: %v", err)
+	}
+	if len(secretBytes) != AUTH_SECRET_KEY_LENGTH {
+		t.Fatalf("Secret key length is not %d bytes", AUTH_SECRET_KEY_LENGTH)
+	}
+	now := time.Now()
+	username := "admin"
+	token, err := generateSessionToken(username, secretBytes, now)
+	if err != nil {
+		t.Fatalf("Failed to generate session token: %v", err)
+	}
+	usernameHashBytes, shouldRegen, err := verifySessionToken(token, secretBytes, now)
+	if err != nil {
+		t.Fatalf("Failed to verify session token: %v", err)
+	}
+	if shouldRegen {
+		t.Fatal("Token should not need to be regenerated immediately after generation")
+	}
+	computedUsernameHash, err := computeUsernameHash(username, secretBytes)
+	if err != nil {
+		t.Fatalf("Failed to compute username hash: %v", err)
+	}
+	if !bytes.Equal(usernameHashBytes, computedUsernameHash) {
+		t.Fatal("Username hash does not match the expected value")
+	}
+	// Test token regeneration
+	timeRightAfterRegenPeriod := now.Add(AUTH_TOKEN_VALID_PERIOD - AUTH_TOKEN_REGEN_BEFORE + 2*time.Second)
+	_, shouldRegen, err = verifySessionToken(token, secretBytes, timeRightAfterRegenPeriod)
+	if err != nil {
+		t.Fatalf("Token verification should not fail during regeneration period, err: %v", err)
+	}
+	if !shouldRegen {
+		t.Fatal("Token should have been marked for regeneration")
+	}
+	// Test token expiration
+	_, _, err = verifySessionToken(token, secretBytes, now.Add(AUTH_TOKEN_VALID_PERIOD+2*time.Second))
+	if err == nil {
+		t.Fatal("Expected token verification to fail after token expiration")
+	}
+	// Test tampered token
+	decodedToken, err := base64.StdEncoding.DecodeString(token)
+	if err != nil {
+		t.Fatalf("Failed to decode token: %v", err)
+	}
+	// If any of the bytes are off by 1, the token should be considered invalid
+	for i := range len(decodedToken) {
+		tampered := make([]byte, len(decodedToken))
+		copy(tampered, decodedToken)
+		tampered[i] += 1
+		_, _, err = verifySessionToken(base64.StdEncoding.EncodeToString(tampered), secretBytes, now)
+		if err == nil {
+			t.Fatalf("Expected token verification to fail for tampered token at index %d", i)
+		}
+	}
+}
+</file>
+
+<file path="internal/glance/auth.go">
+package glance
+import (
+	"bytes"
+	"crypto/hmac"
+	"crypto/rand"
+	"crypto/sha256"
+	"encoding/base64"
+	"encoding/binary"
+	"encoding/json"
+	"fmt"
+	"io"
+	"log"
+	mathrand "math/rand/v2"
+	"net/http"
+	"strconv"
+	"strings"
+	"time"
+	"golang.org/x/crypto/bcrypt"
+)
+const AUTH_SESSION_COOKIE_NAME = "session_token"
+const AUTH_RATE_LIMIT_WINDOW = 5 * time.Minute
+const AUTH_RATE_LIMIT_MAX_ATTEMPTS = 5
+const AUTH_TOKEN_SECRET_LENGTH = 32
+const AUTH_USERNAME_HASH_LENGTH = 32
+const AUTH_SECRET_KEY_LENGTH = AUTH_TOKEN_SECRET_LENGTH + AUTH_USERNAME_HASH_LENGTH
+const AUTH_TIMESTAMP_LENGTH = 4 // uint32
+const AUTH_TOKEN_DATA_LENGTH = AUTH_USERNAME_HASH_LENGTH + AUTH_TIMESTAMP_LENGTH
+// How long the token will be valid for
+const AUTH_TOKEN_VALID_PERIOD = 14 * 24 * time.Hour // 14 days
+// How long the token has left before it should be regenerated
+const AUTH_TOKEN_REGEN_BEFORE = 7 * 24 * time.Hour // 7 days
+var loginPageTemplate = mustParseTemplate("login.html", "document.html", "footer.html")
+type doWhenUnauthorized int
+const (
+	redirectToLogin doWhenUnauthorized = iota
+	showUnauthorizedJSON
+)
+type failedAuthAttempt struct {
+	attempts int
+	first    time.Time
+}
+func generateSessionToken(username string, secret []byte, now time.Time) (string, error) {
+	if len(secret) != AUTH_SECRET_KEY_LENGTH {
+		return "", fmt.Errorf("secret key length is not %d bytes", AUTH_SECRET_KEY_LENGTH)
+	}
+	usernameHash, err := computeUsernameHash(username, secret)
+	if err != nil {
+		return "", err
+	}
+	data := make([]byte, AUTH_TOKEN_DATA_LENGTH)
+	copy(data, usernameHash)
+	expires := now.Add(AUTH_TOKEN_VALID_PERIOD).Unix()
+	binary.LittleEndian.PutUint32(data[AUTH_USERNAME_HASH_LENGTH:], uint32(expires))
+	h := hmac.New(sha256.New, secret[0:AUTH_TOKEN_SECRET_LENGTH])
+	h.Write(data)
+	signature := h.Sum(nil)
+	encodedToken := base64.StdEncoding.EncodeToString(append(data, signature...))
+	// encodedToken ends up being (hashed username + expiration timestamp + signature) encoded as base64
+	return encodedToken, nil
+}
+func computeUsernameHash(username string, secret []byte) ([]byte, error) {
+	if len(secret) != AUTH_SECRET_KEY_LENGTH {
+		return nil, fmt.Errorf("secret key length is not %d bytes", AUTH_SECRET_KEY_LENGTH)
+	}
+	h := hmac.New(sha256.New, secret[AUTH_TOKEN_SECRET_LENGTH:])
+	h.Write([]byte(username))
+	return h.Sum(nil), nil
+}
+func verifySessionToken(token string, secretBytes []byte, now time.Time) ([]byte, bool, error) {
+	tokenBytes, err := base64.StdEncoding.DecodeString(token)
+	if err != nil {
+		return nil, false, err
+	}
+	if len(tokenBytes) != AUTH_TOKEN_DATA_LENGTH+32 {
+		return nil, false, fmt.Errorf("token length is invalid")
+	}
+	if len(secretBytes) != AUTH_SECRET_KEY_LENGTH {
+		return nil, false, fmt.Errorf("secret key length is not %d bytes", AUTH_SECRET_KEY_LENGTH)
+	}
+	usernameHashBytes := tokenBytes[0:AUTH_USERNAME_HASH_LENGTH]
+	timestampBytes := tokenBytes[AUTH_USERNAME_HASH_LENGTH : AUTH_USERNAME_HASH_LENGTH+AUTH_TIMESTAMP_LENGTH]
+	providedSignatureBytes := tokenBytes[AUTH_TOKEN_DATA_LENGTH:]
+	h := hmac.New(sha256.New, secretBytes[0:32])
+	h.Write(tokenBytes[0:AUTH_TOKEN_DATA_LENGTH])
+	expectedSignatureBytes := h.Sum(nil)
+	if !hmac.Equal(expectedSignatureBytes, providedSignatureBytes) {
+		return nil, false, fmt.Errorf("signature does not match")
+	}
+	expiresTimestamp := int64(binary.LittleEndian.Uint32(timestampBytes))
+	if now.Unix() > expiresTimestamp {
+		return nil, false, fmt.Errorf("token has expired")
+	}
+	return usernameHashBytes,
+		// True if the token should be regenerated
+		time.Unix(expiresTimestamp, 0).Add(-AUTH_TOKEN_REGEN_BEFORE).Before(now),
+		nil
+}
+func makeAuthSecretKey(length int) (string, error) {
+	key := make([]byte, length)
+	_, err := rand.Read(key)
+	if err != nil {
+		return "", err
+	}
+	return base64.StdEncoding.EncodeToString(key), nil
+}
+func (a *application) handleAuthenticationAttempt(w http.ResponseWriter, r *http.Request) {
+	if r.Header.Get("Content-Type") != "application/json" {
+		w.WriteHeader(http.StatusBadRequest)
+		return
+	}
+	waitOnFailure := 1*time.Second - time.Duration(mathrand.IntN(500))*time.Millisecond
+	ip := a.addressOfRequest(r)
+	a.authAttemptsMu.Lock()
+	exceededRateLimit, retryAfter := func() (bool, int) {
+		attempt, exists := a.failedAuthAttempts[ip]
+		if !exists {
+			a.failedAuthAttempts[ip] = &failedAuthAttempt{
+				attempts: 1,
+				first:    time.Now(),
+			}
+			return false, 0
+		}
+		elapsed := time.Since(attempt.first)
+		if elapsed < AUTH_RATE_LIMIT_WINDOW && attempt.attempts >= AUTH_RATE_LIMIT_MAX_ATTEMPTS {
+			return true, max(1, int(AUTH_RATE_LIMIT_WINDOW.Seconds()-elapsed.Seconds()))
+		}
+		attempt.attempts++
+		return false, 0
+	}()
+	if exceededRateLimit {
+		a.authAttemptsMu.Unlock()
+		time.Sleep(waitOnFailure)
+		w.Header().Set("Retry-After", strconv.Itoa(retryAfter))
+		w.WriteHeader(http.StatusTooManyRequests)
+		return
+	} else {
+		// Clean up old failed attempts
+		for ipOfAttempt := range a.failedAuthAttempts {
+			if time.Since(a.failedAuthAttempts[ipOfAttempt].first) > AUTH_RATE_LIMIT_WINDOW {
+				delete(a.failedAuthAttempts, ipOfAttempt)
+			}
+		}
+		a.authAttemptsMu.Unlock()
+	}
+	body, err := io.ReadAll(r.Body)
+	if err != nil {
+		w.WriteHeader(http.StatusBadRequest)
+		return
+	}
+	var creds struct {
+		Username string `json:"username"`
+		Password string `json:"password"`
+	}
+	err = json.Unmarshal(body, &creds)
+	if err != nil {
+		w.WriteHeader(http.StatusBadRequest)
+		return
+	}
+	logAuthFailure := func() {
+		log.Printf(
+			"Failed login attempt for user '%s' from %s",
+			creds.Username, ip,
+		)
+	}
+	if len(creds.Username) == 0 || len(creds.Password) == 0 {
+		time.Sleep(waitOnFailure)
+		w.WriteHeader(http.StatusUnauthorized)
+		return
+	}
+	if len(creds.Username) > 50 || len(creds.Password) > 100 {
+		logAuthFailure()
+		time.Sleep(waitOnFailure)
+		w.WriteHeader(http.StatusUnauthorized)
+		return
+	}
+	u, exists := a.Config.Auth.Users[creds.Username]
+	if !exists {
+		logAuthFailure()
+		time.Sleep(waitOnFailure)
+		w.WriteHeader(http.StatusUnauthorized)
+		return
+	}
+	if err := bcrypt.CompareHashAndPassword(u.PasswordHash, []byte(creds.Password)); err != nil {
+		logAuthFailure()
+		time.Sleep(waitOnFailure)
+		w.WriteHeader(http.StatusUnauthorized)
+		return
+	}
+	token, err := generateSessionToken(creds.Username, a.authSecretKey, time.Now())
+	if err != nil {
+		log.Printf("Could not compute session token during login attempt: %v", err)
+		time.Sleep(waitOnFailure)
+		w.WriteHeader(http.StatusUnauthorized)
+		return
+	}
+	a.setAuthSessionCookie(w, r, token, time.Now().Add(AUTH_TOKEN_VALID_PERIOD))
+	a.authAttemptsMu.Lock()
+	delete(a.failedAuthAttempts, ip)
+	a.authAttemptsMu.Unlock()
+	w.WriteHeader(http.StatusOK)
+}
+func (a *application) isAuthorized(w http.ResponseWriter, r *http.Request) bool {
+	if !a.RequiresAuth {
+		return true
+	}
+	token, err := r.Cookie(AUTH_SESSION_COOKIE_NAME)
+	if err != nil || token.Value == "" {
+		return false
+	}
+	usernameHash, shouldRegenerate, err := verifySessionToken(token.Value, a.authSecretKey, time.Now())
+	if err != nil {
+		return false
+	}
+	username, exists := a.usernameHashToUsername[string(usernameHash)]
+	if !exists {
+		return false
+	}
+	_, exists = a.Config.Auth.Users[username]
+	if !exists {
+		return false
+	}
+	if shouldRegenerate {
+		newToken, err := generateSessionToken(username, a.authSecretKey, time.Now())
+		if err != nil {
+			log.Printf("Could not compute session token during regeneration: %v", err)
+			return false
+		}
+		a.setAuthSessionCookie(w, r, newToken, time.Now().Add(AUTH_TOKEN_VALID_PERIOD))
+	}
+	return true
+}
+// Handles sending the appropriate response for an unauthorized request and returns true if the request was unauthorized
+func (a *application) handleUnauthorizedResponse(w http.ResponseWriter, r *http.Request, fallback doWhenUnauthorized) bool {
+	if a.isAuthorized(w, r) {
+		return false
+	}
+	switch fallback {
+	case redirectToLogin:
+		http.Redirect(w, r, a.Config.Server.BaseURL+"/login", http.StatusSeeOther)
+	case showUnauthorizedJSON:
+		w.WriteHeader(http.StatusUnauthorized)
+		w.Write([]byte(`{"error": "Unauthorized"}`))
+	}
+	return true
+}
+// Maybe this should be a POST request instead?
+func (a *application) handleLogoutRequest(w http.ResponseWriter, r *http.Request) {
+	a.setAuthSessionCookie(w, r, "", time.Now().Add(-1*time.Hour))
+	http.Redirect(w, r, a.Config.Server.BaseURL+"/login", http.StatusSeeOther)
+}
+func (a *application) setAuthSessionCookie(w http.ResponseWriter, r *http.Request, token string, expires time.Time) {
+	http.SetCookie(w, &http.Cookie{
+		Name:     AUTH_SESSION_COOKIE_NAME,
+		Value:    token,
+		Expires:  expires,
+		Secure:   strings.ToLower(r.Header.Get("X-Forwarded-Proto")) == "https",
+		Path:     a.Config.Server.BaseURL + "/",
+		SameSite: http.SameSiteLaxMode,
+		HttpOnly: true,
+	})
+}
+func (a *application) handleLoginPageRequest(w http.ResponseWriter, r *http.Request) {
+	if a.isAuthorized(w, r) {
+		http.Redirect(w, r, a.Config.Server.BaseURL+"/", http.StatusSeeOther)
+		return
+	}
+	data := &templateData{
+		App: a,
+	}
+	a.populateTemplateRequestData(&data.Request, r)
+	var responseBytes bytes.Buffer
+	err := loginPageTemplate.Execute(&responseBytes, data)
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		w.Write([]byte(err.Error()))
+		return
+	}
+	w.Write(responseBytes.Bytes())
+}
 </file>
 
 <file path="internal/glance/cli.go">
@@ -7663,6 +7080,147 @@ var bundledCSSContents = func() []byte {
 }()
 </file>
 
+<file path="internal/glance/hub.go">
+package glance
+import (
+	"log"
+	"net/http"
+	"sync"
+	"time"
+	"github.com/gorilla/websocket"
+)
+var upgrader = websocket.Upgrader{
+	ReadBufferSize:  1024,
+	WriteBufferSize: 1024,
+	CheckOrigin: func(r *http.Request) bool {
+		return true // Allow all for personal dashboard
+	},
+}
+type client struct {
+	hub  *hub
+	conn *websocket.Conn
+	send chan []byte
+}
+func (c *client) writePump() {
+	ticker := time.NewTicker(54 * time.Second)
+	defer func() {
+		ticker.Stop()
+		c.conn.Close()
+	}()
+	for {
+		select {
+		case message, ok := <-c.send:
+			c.conn.SetWriteDeadline(time.Now().Add(10 * time.Second))
+			if !ok {
+				c.conn.WriteMessage(websocket.CloseMessage, []byte{})
+				return
+			}
+			w, err := c.conn.NextWriter(websocket.TextMessage)
+			if err != nil {
+				return
+			}
+			w.Write(message)
+			n := len(c.send)
+			for i := 0; i < n; i++ {
+				w.Write([]byte{'\n'})
+				w.Write(<-c.send)
+			}
+			if err := w.Close(); err != nil {
+				return
+			}
+		case <-ticker.C:
+			c.conn.SetWriteDeadline(time.Now().Add(10 * time.Second))
+			if err := c.conn.WriteMessage(websocket.PingMessage, nil); err != nil {
+				return
+			}
+		}
+	}
+}
+func (c *client) readPump() {
+	defer func() {
+		c.hub.unregister <- c
+		c.conn.Close()
+	}()
+	c.conn.SetReadLimit(512)
+	c.conn.SetReadDeadline(time.Now().Add(60 * time.Second))
+	c.conn.SetPongHandler(func(string) error { c.conn.SetReadDeadline(time.Now().Add(60 * time.Second)); return nil })
+	for {
+		_, _, err := c.conn.ReadMessage()
+		if err != nil {
+			if websocket.IsUnexpectedCloseError(err, websocket.CloseGoingAway, websocket.CloseAbnormalClosure) {
+				log.Printf("error: %v", err)
+			}
+			break
+		}
+	}
+}
+type hub struct {
+	clients    map[*client]bool
+	broadcast  chan []byte
+	register   chan *client
+	unregister chan *client
+	mu         sync.Mutex
+}
+func newHub() *hub {
+	return &hub{
+		broadcast:  make(chan []byte),
+		register:   make(chan *client),
+		unregister: make(chan *client),
+		clients:    make(map[*client]bool),
+	}
+}
+func (h *hub) run() {
+	for {
+		select {
+		case client := <-h.register:
+			h.mu.Lock()
+			h.clients[client] = true
+			h.mu.Unlock()
+		case client := <-h.unregister:
+			h.mu.Lock()
+			if _, ok := h.clients[client]; ok {
+				delete(h.clients, client)
+				close(client.send)
+			}
+			h.mu.Unlock()
+		case message := <-h.broadcast:
+			h.mu.Lock()
+			for client := range h.clients {
+				select {
+				case client.send <- message:
+				default:
+					close(client.send)
+					delete(h.clients, client)
+				}
+			}
+			h.mu.Unlock()
+		}
+	}
+}
+func (h *hub) broadcastHTML(html string) {
+	h.broadcast <- []byte(html)
+}
+func (h *hub) close() {
+	h.mu.Lock()
+	defer h.mu.Unlock()
+	for client := range h.clients {
+		close(client.send)
+		delete(h.clients, client)
+	}
+}
+func (h *hub) handleWebSocket(w http.ResponseWriter, r *http.Request) {
+	conn, err := upgrader.Upgrade(w, r, nil)
+	if err != nil {
+		log.Println(err)
+		return
+	}
+	client := &client{hub: h, conn: conn, send: make(chan []byte, 256)}
+	client.hub.register <- client
+	go client.writePump()
+	go client.readPump()
+}
+</file>
+
 <file path="internal/glance/main.go">
 package glance
 import (
@@ -7844,6 +7402,251 @@ func serveUpdateNoticeIfConfigLocationNotMigrated(configPath string) bool {
 }
 </file>
 
+<file path="internal/glance/static/css/login.css">
+.login-bounds {
+    max-width: 500px;
+    padding: 0 2rem;
+}
+.form-label {
+    text-transform: uppercase;
+    margin-bottom: 0.5rem;
+}
+.form-input {
+    transition: border-color .2s;
+}
+.form-input input {
+    border: 0;
+    background: none;
+    width: 100%;
+    height: 5.2rem;
+    font: inherit;
+    outline: none;
+    color: var(--color-text-highlight);
+}
+.form-input-icon {
+    width: 2rem;
+    height: 2rem;
+    margin-top: -0.1rem;
+    opacity: 0.5;
+}
+.form-input input[type="password"] {
+    letter-spacing: 0.3rem;
+    font-size: 0.9em;
+}
+.form-input input[type="password"]::placeholder {
+    letter-spacing: 0;
+    font-size: var(--font-size-base);
+}
+.form-input:hover {
+    border-color: var(--color-progress-border);
+}
+.form-input:focus-within {
+    border-color: var(--color-primary);
+    transition-duration: .7s;
+}
+.login-button {
+    width: 100%;
+    display: block;
+    padding: 1rem;
+    background: none;
+    border: 1px solid var(--color-text-subdue);
+    border-radius: var(--border-radius);
+    color: var(--color-text-paragraph);
+    cursor: pointer;
+    font: inherit;
+    font-size: var(--font-size-h4);
+    display: flex;
+    gap: .5rem;
+    align-items: center;
+    justify-content: center;
+    transition: all .3s, margin-top 0s;
+    margin-top: 3rem;
+}
+.login-button:not(:disabled) {
+    box-shadow: 0 0 10px 1px var(--color-separator);
+}
+.login-error-message:not(:empty) + .login-button {
+    margin-top: 2rem;
+}
+.login-button:focus, .login-button:hover {
+    outline: none;
+    border-color: var(--color-primary);
+    color: var(--color-primary);
+}
+.login-button:disabled {
+    border-color: var(--color-separator);
+    color: var(--color-text-subdue);
+    cursor: not-allowed;
+}
+.login-button svg {
+    width: 1.7rem;
+    height: 1.7rem;
+    transition: transform .2s;
+}
+.login-button:not(:disabled):hover svg, .login-button:not(:disabled):focus svg {
+    transform: translateX(.5rem);
+}
+.animate-entrance {
+    animation: fieldReveal 0.7s backwards;
+    animation-timing-function: cubic-bezier(0.22, 1, 0.36, 1);
+}
+.animate-entrance:nth-child(1) { animation-delay: .1s; }
+.animate-entrance:nth-child(2) { animation-delay: .2s; }
+.animate-entrance:nth-child(4) { animation-delay: .3s; }
+@keyframes fieldReveal {
+    from {
+        opacity: 0.0001;
+        transform: translateY(4rem);
+    }
+}
+.login-error-message {
+    color: var(--color-negative);
+    font-size: var(--font-size-base);
+    padding: 1.3rem calc(var(--widget-content-horizontal-padding) + 1px);
+    position: relative;
+    margin-top: 2rem;
+    animation: errorMessageEntrance 0.4s backwards cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+@keyframes errorMessageEntrance {
+    from {
+        opacity: 0;
+        transform: scale(1.1);
+    }
+}
+.login-error-message:empty {
+    display: none;
+}
+.login-error-message::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    border-radius: var(--border-radius);
+    background: var(--color-negative);
+    opacity: 0.05;
+    z-index: -1;
+}
+.footer {
+    animation-delay: .4s;
+    animation-duration: 1s;
+}
+.toggle-password-visibility {
+    background: none;
+    border: none;
+    cursor: pointer;
+}
+</file>
+
+<file path="internal/glance/static/css/widget-todo.css">
+.todo-widget {
+    padding-top: 4rem;
+}
+.todo-plus-icon {
+    --icon-color: var(--color-text-subdue);
+    position: relative;
+    width: 1.4rem;
+    height: 1.4rem;
+}
+.todo-plus-icon::before, .todo-plus-icon::after {
+    content: "";
+    position: absolute;
+    background-color: var(--icon-color);
+    transition: background-color .2s;
+}
+.todo-plus-icon::before {
+    width: 2px;
+    inset-block: 0.2rem;
+    left: 50%;
+    transform: translateX(-50%);
+}
+.todo-plus-icon::after {
+    height: 2px;
+    inset-inline: 0.2rem;
+    top: 50%;
+    transform: translateY(-50%);
+}
+.todo-input textarea::placeholder {
+    color: var(--color-text-base-muted);
+}
+.todo-input {
+    position: relative;
+    color: var(--color-text-highlight);
+}
+.todo-input:focus-within .todo-plus-icon {
+    --icon-color: var(--color-text-base);
+}
+.todo-item {
+    transform-origin: center;
+    padding: 0.5rem 0;
+}
+.todo-item-checkbox {
+    -webkit-appearance: none;
+    appearance: none;
+    border: 2px solid var(--color-text-subdue);
+    width: 1.4rem;
+    height: 1.4rem;
+    position: relative;
+    cursor: pointer;
+    border-radius: 0.3rem;
+    transition: border-color .2s;
+}
+.todo-item-checkbox::before {
+    content: "";
+    inset: -1rem;
+    position: absolute;
+}
+.todo-item-checkbox::after {
+    content: '';
+    position: absolute;
+    inset: 0.3rem;
+    border-radius: 0.1rem;
+    opacity: 0;
+    transition: opacity .2s;
+}
+.todo-item-checkbox:checked::after {
+    background: var(--color-primary);
+    opacity: 1;
+}
+.todo-item-checkbox:focus-visible {
+    outline: none;
+    border-color: var(--color-primary);
+}
+.todo-item-text {
+    color: var(--color-text-base);
+    transition: color .35s;
+}
+.todo-item-text:focus {
+    color: var(--color-text-highlight);
+}
+.todo-item-drag-handle {
+    position: absolute;
+    top: -0.5rem;
+    inset-inline: 0;
+    height: 1rem;
+    cursor: grab;
+}
+.todo-item.is-being-dragged .todo-item-drag-handle {
+    height: 3rem;
+    top: -1.5rem;
+}
+.todo-item:has(.todo-item-checkbox:checked) .todo-item-text {
+    text-decoration: line-through;
+    color: var(--color-text-subdue);
+}
+.todo-item-delete {
+    width: 1.5rem;
+    height: 1.5rem;
+    opacity: 0;
+    transition: opacity .2s;
+    outline-offset: .5rem;
+}
+.todo-item:hover .todo-item-delete, .todo-item:focus-within .todo-item-delete {
+    opacity: 1;
+}
+.todo-item.is-being-dragged .todo-item-delete {
+    opacity: 0;
+}
+</file>
+
 <file path="internal/glance/templates/bookmarks.html">
 {{ template "widget-base.html" . }}
 {{ define "widget-content" }}
@@ -7940,6 +7743,20 @@ func serveUpdateNoticeIfConfigLocationNotMigrated(configPath string) bool {
 {{- end }}
 </file>
 
+<file path="internal/glance/templates/footer.html">
+{{ if not .App.Config.Branding.HideFooter }}
+<footer class="footer flex items-center flex-column">
+{{ if eq "" .App.Config.Branding.CustomFooter }}
+    <div>
+        <a class="size-h3" href="https://github.com/glanceapp/glance" target="_blank" rel="noreferrer">Glance</a> {{ if ne "dev" .App.Version }}<a class="visited-indicator" title="Release notes" href="https://github.com/glanceapp/glance/releases/tag/{{ .App.Version }}" target="_blank" rel="noreferrer">{{ .App.Version }}</a>{{ else }}({{ .App.Version }}){{ end }}
+    </div>
+{{ else }}
+    {{ .App.Config.Branding.CustomFooter }}
+{{ end }}
+</footer>
+{{ end }}
+</file>
+
 <file path="internal/glance/templates/forum-posts.html">
 {{ template "widget-base.html" . }}
 {{- define "widget-content" }}
@@ -8026,6 +7843,55 @@ func serveUpdateNoticeIfConfigLocationNotMigrated(configPath string) bool {
 {{ end }}
 </file>
 
+<file path="internal/glance/templates/login.html">
+{{- template "document.html" . }}
+{{- define "document-title" }}Login{{ end }}
+{{- define "document-head-before" }}
+<link rel="preload" href='{{ .App.StaticAssetPath "js/templating.js" }}' as="script"/>
+<link rel="prefetch" href='{{ .App.StaticAssetPath "js/page.js" }}'/>
+{{- end }}
+{{- define "document-head-after" }}
+<link rel="stylesheet" href='{{ .App.StaticAssetPath "css/login.css" }}'>
+<script type="module" src='{{ .App.StaticAssetPath "js/login.js" }}'></script>
+{{- end }}
+{{- define "document-body" }}
+<div class="flex flex-column body-content">
+    <div class="flex grow items-center justify-center" style="padding-bottom: 5rem">
+        <h1 class="visually-hidden">Login</h1>
+        <main id="login-container" class="grow login-bounds" style="display: none;">
+            <div class="animate-entrance">
+                <label class="form-label widget-header" for="username">Username</label>
+                <div class="form-input widget-content-frame padding-inline-widget flex gap-10 items-center">
+                    <svg class="form-input-icon" fill="var(--color-text-subdue)" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" aria-hidden="true">
+                        <path d="M10 8a3 3 0 1 0 0-6 3 3 0 0 0 0 6ZM3.465 14.493a1.23 1.23 0 0 0 .41 1.412A9.957 9.957 0 0 0 10 18c2.31 0 4.438-.784 6.131-2.1.43-.333.604-.903.408-1.41a7.002 7.002 0 0 0-13.074.003Z" />
+                    </svg>
+                    <input type="text" id="username" class="input" placeholder="Enter your username" autocomplete="off">
+                </div>
+            </div>
+            <div class="animate-entrance">
+                <label class="form-label widget-header margin-top-20" for="password">Password</label>
+                <div class="form-input widget-content-frame padding-inline-widget flex gap-10 items-center">
+                    <svg class="form-input-icon" fill="var(--color-text-subdue)" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" aria-hidden="true">
+                        <path fill-rule="evenodd" d="M8 7a5 5 0 1 1 3.61 4.804l-1.903 1.903A1 1 0 0 1 9 14H8v1a1 1 0 0 1-1 1H6v1a1 1 0 0 1-1 1H3a1 1 0 0 1-1-1v-2a1 1 0 0 1 .293-.707L8.196 8.39A5.002 5.002 0 0 1 8 7Zm5-3a.75.75 0 0 0 0 1.5A1.5 1.5 0 0 1 14.5 7 .75.75 0 0 0 16 7a3 3 0 0 0-3-3Z" clip-rule="evenodd" />
+                    </svg>
+                    <input type="password" id="password" class="input" placeholder="********" autocomplete="off">
+                    <button class="toggle-password-visibility" id="toggle-password-visibility" tabindex="-1"></button>
+                </div>
+            </div>
+            <div class="login-error-message" id="error-message"></div>
+            <button class="login-button animate-entrance" id="login-button">
+                <div>LOGIN</div>
+                <svg stroke="currentColor" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" aria-hidden="true">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M13.5 4.5 21 12m0 0-7.5 7.5M21 12H3" />
+                </svg>
+            </button>
+        </main>
+    </div>
+    {{ template "footer.html" . }}
+</div>
+{{- end }}
+</file>
+
 <file path="internal/glance/templates/monitor.html">
 {{ template "widget-base.html" . }}
 {{ define "widget-content" }}
@@ -8077,6 +7943,131 @@ func serveUpdateNoticeIfConfigLocationNotMigrated(configPath string) bool {
     </svg>
 </div>
 {{ end }}
+{{ end }}
+</file>
+
+<file path="internal/glance/templates/page-content.html">
+{{ if .Page.ShowMobileHeader }}
+<div class="mobile-reachability-header">{{ .Page.Title }}</div>
+{{ end }}
+{{ if .Page.HeadWidgets }}
+<div class="head-widgets">
+    {{- range .Page.HeadWidgets }}
+    {{- .Render }}
+    {{- end }}
+</div>
+{{ end }}
+<div class="page-columns">
+{{- range .Page.Columns }}
+    <div class="page-column page-column-{{ .Size }}">
+        {{- range .Widgets }}
+        {{- .Render }}
+        {{- end }}
+    </div>
+{{- end }}
+</div>
+</file>
+
+<file path="internal/glance/templates/repository.html">
+{{ template "widget-base.html" . }}
+{{ define "widget-content" }}
+<a class="size-h4 color-highlight" href="https://github.com/{{ $.Repository.Name }}" target="_blank" rel="noreferrer">{{ .Repository.Name }}</a>
+<ul class="list-horizontal-text">
+    <li>{{ .Repository.Stars | formatNumber }} stars</li>
+    <li>{{ .Repository.Forks | formatNumber }} forks</li>
+</ul>
+{{ if gt (len .Repository.Commits) 0 }}
+<hr class="margin-block-8">
+<a class="text-compact" href="https://github.com/{{ $.Repository.Name }}/commits" target="_blank" rel="noreferrer">Last {{ .CommitsLimit }} commits</a>
+<div class="flex gap-7 size-h5 size-base-on-mobile margin-top-3">
+    <ul class="list list-gap-2">
+        {{ range .Repository.Commits }}
+        <li {{ dynamicRelativeTimeAttrs .CreatedAt }}></li>
+        {{ end }}
+    </ul>
+    <ul class="list list-gap-2 min-width-0">
+        {{ range .Repository.Commits }}
+        <li><a class="color-primary-if-not-visited text-truncate block" title="{{ .Author }}" target="_blank" rel="noreferrer" href="https://github.com/{{ $.Repository.Name }}/commit/{{ .Sha }}">{{ .Message }}</a></li>
+        {{ end }}
+    </ul>
+</div>
+{{ end }}
+{{ if gt (len .Repository.PullRequests) 0 }}
+<hr class="margin-block-8">
+<a class="text-compact" href="https://github.com/{{ $.Repository.Name }}/pulls" target="_blank" rel="noreferrer">Open pull requests ({{ .Repository.OpenPullRequests | formatNumber }} total)</a>
+<div class="flex gap-7 size-h5 size-base-on-mobile margin-top-3">
+    <ul class="list list-gap-2">
+        {{ range .Repository.PullRequests }}
+        <li {{ dynamicRelativeTimeAttrs .CreatedAt }}></li>
+        {{ end }}
+    </ul>
+    <ul class="list list-gap-2 min-width-0">
+        {{ range .Repository.PullRequests }}
+        <li><a class="color-primary-if-not-visited text-truncate block" target="_blank" rel="noreferrer" href="https://github.com/{{ $.Repository.Name }}/pull/{{ .Number }}">{{ .Title }}</a></li>
+        {{ end }}
+    </ul>
+</div>
+{{ end }}
+{{ if gt (len .Repository.Issues) 0 }}
+<hr class="margin-block-10">
+<a class="text-compact" href="https://github.com/{{ $.Repository.Name }}/issues" target="_blank" rel="noreferrer">Open issues ({{ .Repository.OpenIssues | formatNumber }} total)</a>
+<div class="flex gap-7 size-h5 size-base-on-mobile margin-top-3">
+    <ul class="list list-gap-2">
+        {{ range .Repository.Issues }}
+        <li {{ dynamicRelativeTimeAttrs .CreatedAt }}></li>
+        {{ end }}
+    </ul>
+    <ul class="list list-gap-2 min-width-0">
+        {{ range .Repository.Issues }}
+        <li><a class="color-primary-if-not-visited text-truncate block" target="_blank" rel="noreferrer" href="https://github.com/{{ $.Repository.Name }}/issues/{{ .Number }}">{{ .Title }}</a></li>
+        {{ end }}
+    </ul>
+</div>
+{{ end }}
+{{ end }}
+</file>
+
+<file path="internal/glance/templates/theme-preset-preview.html">
+{{- $background := "hsl(240, 8%, 9%)" | safeCSS }}
+{{- $primary := "hsl(43, 50%, 70%)" | safeCSS  }}
+{{- $positive := "hsl(43, 50%, 70%)" | safeCSS }}
+{{- $negative := "hsl(0, 70%, 70%)" | safeCSS }}
+{{- if .BackgroundColor }}{{ $background = .BackgroundColor.String | safeCSS }}{{ end }}
+{{- if .PrimaryColor }}
+    {{- $primary = .PrimaryColor.String | safeCSS }}
+    {{- if not .PositiveColor }}
+        {{- $positive = $primary }}
+    {{- else }}
+        {{- $positive = .PositiveColor.String | safeCSS }}
+    {{- end }}
+{{- end }}
+{{- if .NegativeColor }}{{ $negative = .NegativeColor.String | safeCSS }}{{ end }}
+<button class="theme-preset{{ if .Light }} theme-preset-light{{ end }}" style="--color: {{ $background }}" data-key="{{ .Key }}">
+    <div class="theme-color" style="--color: {{ $primary }}"></div>
+    <div class="theme-color" style="--color: {{ $positive }}"></div>
+    <div class="theme-color" style="--color: {{ $negative }}"></div>
+</button>
+</file>
+
+<file path="internal/glance/templates/todo.html">
+{{ template "widget-base.html" . }}
+{{ define "widget-content" }}
+<div class="todo" data-todo-id="{{ .TodoID }}"></div>
+{{ end }}
+</file>
+
+<file path="internal/glance/templates/video-card-contents.html">
+{{ define "video-card-contents" }}
+<img class="video-thumbnail thumbnail" loading="lazy" src="{{ .ThumbnailUrl }}" alt="">
+<div class="margin-top-10 margin-bottom-widget flex flex-column grow padding-inline-widget">
+    <a class="text-truncate-2-lines margin-bottom-auto color-primary-if-not-visited" href="{{ .Url | safeURL }}" target="_blank" rel="noreferrer">{{ .Title }}</a>
+    <ul class="list-horizontal-text flex-nowrap margin-top-7">
+        <li class="shrink-0" {{ dynamicRelativeTimeAttrs .TimePosted }}></li>
+        <li class="min-width-0">
+            <a class="block text-truncate" href="{{ .AuthorUrl }}" target="_blank" rel="noreferrer">{{ .Author }}</a>
+        </li>
+    </ul>
+</div>
 {{ end }}
 </file>
 
@@ -8279,27 +8270,6 @@ func fetchStatusForSites(requests []*SiteStatusRequest) ([]siteStatus, error) {
 }
 </file>
 
-<file path="internal/glance/widget-todo.go">
-package glance
-import (
-	"html/template"
-)
-var todoWidgetTemplate = mustParseTemplate("todo.html", "widget-base.html")
-type todoWidget struct {
-	widgetBase `yaml:",inline"`
-	cachedHTML template.HTML `yaml:"-"`
-	TodoID     string        `yaml:"id"`
-}
-func (widget *todoWidget) initialize() error {
-	widget.withTitle("To-do").withError(nil)
-	widget.cachedHTML = widget.renderTemplate(widget, todoWidgetTemplate)
-	return nil
-}
-func (widget *todoWidget) Render() template.HTML {
-	return widget.cachedHTML
-}
-</file>
-
 <file path="internal/glance/widget-utils.go">
 package glance
 import (
@@ -8499,176 +8469,15 @@ func workerPoolDo[I any, O any](job *workerPoolJob[I, O]) ([]O, []error, error) 
 }
 </file>
 
-<file path="taskfile.yml">
-# yaml-language-server: $schema=https://taskfile.dev/schema.json
-version: "3"
-# ---------------------------------------------------------------------------
-# System-aware variables — resolved at runtime, not at parse time.
-# ---------------------------------------------------------------------------
-vars:
-  # ── Binary name ──────────────────────────────────────────────────────────
-  APP_NAME: "app"
-  # ── OS / Arch detection ──────────────────────────────────────────────────
-  GOOS:
-    sh: go env GOOS
-  GOARCH:
-    sh: go env GOARCH
-  # Binary extension on Windows
-  EXT:
-    sh: |
-      if [ "$(go env GOOS)" = "windows" ]; then echo ".exe"; else echo ""; fi
-  # ── Output paths ─────────────────────────────────────────────────────────
-  BIN_DIR: "./bin"
-  DIST_DIR: "./dist"
-  BINARY: "{{.BIN_DIR}}/{{.APP_NAME}}{{.EXT}}"
-  # ── Common ldflags ───────────────────────────────────────────────────────
-  PKG_PREFIX: "{{.MODULE}}/internal/version"
-  LDFLAGS: >-
-    -s -w
-    -X '{{.PKG_PREFIX}}.Commit={{.GIT_COMMIT}}'
-  # ── Go tooling ───────────────────────────────────────────────────────────
-  GO_CMD: "go"
-  GOFLAGS: ""
-  # ── Test config ──────────────────────────────────────────────────────────
-  TEST_FLAGS: "-race -timeout 120s"
-  COVERAGE_OUT: "./coverage.out"
-  COVERAGE_HTML: "./coverage.html"
-  # ── Module / package ─────────────────────────────────────────────────────
-  MODULE:
-    sh: go list -m 2>/dev/null || echo "unknown"
-  GIT_COMMIT:
-    sh: git rev-parse --short HEAD 2>/dev/null || echo "unknown"
-  #  CUSTOM VARIABLES
-  SUMEXT: "**/*.go,**/*.html,**/*.css,**/*.yml"
-  IGNOREXT: ".secrets"
-env:
-  CGO_ENABLED: "0" # safe default; override per-task if needed
-  GOFLAGS: "{{.GOFLAGS}}"
-# ---------------------------------------------------------------------------
-# Tasks
-# ---------------------------------------------------------------------------
-tasks:
-  opts:
-    desc: "Show available tasks"
-    silent: true
-    cmds:
-      - task --list
-  build:
-    desc: "Build for the current OS/arch ({{.GOOS}}/{{.GOARCH}})"
-    vars:
-      BINARY: "{{.BIN_DIR}}/{{.APP_NAME}}{{.EXT}}"
-    cmds:
-      - mkdir -p {{.BIN_DIR}}
-      - >-
-        {{.GO_CMD}} build
-        -trimpath
-        -ldflags "{{.LDFLAGS}}"
-        -o {{.BINARY}}
-        ./...
-    generates:
-      - "{{.BINARY}}"
-    sources:
-      - "**/*.go"
-      - "go.mod"
-      - "go.sum"
-  build:darwin:
-    desc: "Cross-compile → darwin/arm64 (Apple Silicon)"
-    env:
-      GOOS: darwin
-      GOARCH: arm64
-      CGO_ENABLED: "0"
-    cmds:
-      - mkdir -p {{.DIST_DIR}}
-      - >-
-        {{.GO_CMD}} build
-        -trimpath
-        -ldflags "{{.LDFLAGS}}"
-        -o {{.DIST_DIR}}/{{.APP_NAME}}-darwin-arm64
-        ./...
-  build:windows:
-    desc: "Cross-compile → windows/amd64"
-    env:
-      GOOS: windows
-      GOARCH: amd64
-      CGO_ENABLED: "0"
-    cmds:
-      - mkdir -p {{.DIST_DIR}}
-      - >-
-        {{.GO_CMD}} build
-        -trimpath
-        -ldflags "{{.LDFLAGS}}"
-        -o {{.DIST_DIR}}/{{.APP_NAME}}-windows-amd64.exe
-        ./...
-  build:all:
-    desc: "Cross-compile for all supported platforms → dist/"
-    deps:
-      - build:darwin
-      - build:windows
-    cmds:
-      - echo "✅  All platform binaries written to {{.DIST_DIR}}/"
-  run:
-    desc: "Build & run (pass args with -- <args>)"
-    deps: [build]
-    cmds:
-      - "{{.BINARY}} {{.CLI_ARGS}}"
-  # ── Lint / vet ────────────────────────────────────────────────────────────
-  vet:
-    desc: "Run go vet"
-    cmds:
-      - "{{.GO_CMD}} vet ./..."
-  lint:
-    desc: "Run golangci-lint (installs if missing)"
-    cmds:
-      - |
-        if ! command -v golangci-lint &>/dev/null; then
-          echo "⬇️  Installing golangci-lint {{.GOLANGCI_VERSION}} …"
-          go install github.com/golangci/golangci-lint/cmd/golangci-lint@{{.GOLANGCI_VERSION}}
-        fi
-      - golangci-lint run ./...
-  lint:fix:
-    desc: "Run golangci-lint with auto-fix"
-    cmds:
-      - golangci-lint run --fix ./...
-  # ── Format ───────────────────────────────────────────────────────────────
-  fmt:
-    desc: "Format all Go source files"
-    cmds:
-      - "{{.GO_CMD}} fmt ./..."
-      - |
-        if command -v goimports &>/dev/null; then
-          goimports -w .
-        fi
-  fmt:check:
-    desc: "Check formatting (non-zero exit if changes needed)"
-    cmds:
-      - |
-        unformatted=$(gofmt -l .)
-        if [ -n "$unformatted" ]; then
-          echo "❌  Unformatted files:"
-          echo "$unformatted"
-          exit 1
-        fi
-        echo "✅  All files formatted"
-  # ── Module management ─────────────────────────────────────────────────────
-  tidy:
-    desc: "go mod tidy"
-    cmds:
-      - "{{.GO_CMD}} mod tidy"
-  deps:upgrade:
-    desc: "Upgrade all direct dependencies to latest"
-    cmds:
-      - "{{.GO_CMD}} get -u ./..."
-      - "{{.GO_CMD}} mod tidy"
-  deps:verify:
-    desc: "Verify module checksums"
-    cmds:
-      - "{{.GO_CMD}} mod verify"
-  # ── CUSTOM ─────────────────────────────────────────────────────────
-  sum:
-    desc: "Runs repomix with scoped output"
-    silent: true
-    cmds:
-      - repomix --output "{{.APP_NAME}}.xml" --include "{{.SUMEXT}}" --ignore "{{.IGNOREXT}}"
+<file path="main.go">
+package main
+import (
+	"os"
+	"github.com/limpdev/banter/internal/glance"
+)
+func main() {
+	os.Exit(glance.Main())
+}
 </file>
 
 <file path="internal/glance/static/css/widgets.css">
@@ -8884,102 +8693,6 @@ func dynamicRelativeTimeAttrs(t interface{ Unix() int64 }) template.HTMLAttr {
         {{- end}}
     </div>
 </div>
-</file>
-
-<file path="internal/glance/theme.go">
-package glance
-import (
-	"fmt"
-	"html/template"
-	"net/http"
-	"time"
-)
-var (
-	themeStyleTemplate         = mustParseTemplate("theme-style.gotmpl")
-	themePresetPreviewTemplate = mustParseTemplate("theme-preset-preview.html")
-)
-func (a *application) handleThemeChangeRequest(w http.ResponseWriter, r *http.Request) {
-	themeKey := r.PathValue("key")
-	properties, exists := a.Config.Theme.Presets.Get(themeKey)
-	if !exists && themeKey != "default" {
-		w.WriteHeader(http.StatusNotFound)
-		return
-	}
-	if themeKey == "default" {
-		properties = &a.Config.Theme.themeProperties
-	}
-	http.SetCookie(w, &http.Cookie{
-		Name:     "theme",
-		Value:    themeKey,
-		Path:     a.Config.Server.BaseURL + "/",
-		SameSite: http.SameSiteLaxMode,
-		Expires:  time.Now().Add(2 * 365 * 24 * time.Hour),
-	})
-	w.Header().Set("Content-Type", "text/css")
-	w.Header().Set("X-Scheme", ternary(properties.Light, "light", "dark"))
-	w.Write([]byte(properties.CSS))
-}
-type themeProperties struct {
-	BackgroundColor          *hslColorField `yaml:"background-color"`
-	PrimaryColor             *hslColorField `yaml:"primary-color"`
-	PositiveColor            *hslColorField `yaml:"positive-color"`
-	NegativeColor            *hslColorField `yaml:"negative-color"`
-	Light                    bool           `yaml:"light"`
-	ContrastMultiplier       float32        `yaml:"contrast-multiplier"`
-	TextSaturationMultiplier float32        `yaml:"text-saturation-multiplier"`
-	Key                  string        `yaml:"-"`
-	CSS                  template.CSS  `yaml:"-"`
-	PreviewHTML          template.HTML `yaml:"-"`
-	BackgroundColorAsHex string        `yaml:"-"`
-}
-func (t *themeProperties) init() error {
-	css, err := executeTemplateToString(themeStyleTemplate, t)
-	if err != nil {
-		return fmt.Errorf("compiling theme style: %v", err)
-	}
-	t.CSS = template.CSS(whitespaceAtBeginningOfLinePattern.ReplaceAllString(css, ""))
-	previewHTML, err := executeTemplateToString(themePresetPreviewTemplate, t)
-	if err != nil {
-		return fmt.Errorf("compiling theme preview: %v", err)
-	}
-	t.PreviewHTML = template.HTML(previewHTML)
-	if t.BackgroundColor != nil {
-		t.BackgroundColorAsHex = t.BackgroundColor.ToHex()
-	} else {
-		t.BackgroundColorAsHex = "#151519"
-	}
-	return nil
-}
-func (t1 *themeProperties) SameAs(t2 *themeProperties) bool {
-	if t1 == nil && t2 == nil {
-		return true
-	}
-	if t1 == nil || t2 == nil {
-		return false
-	}
-	if t1.Light != t2.Light {
-		return false
-	}
-	if t1.ContrastMultiplier != t2.ContrastMultiplier {
-		return false
-	}
-	if t1.TextSaturationMultiplier != t2.TextSaturationMultiplier {
-		return false
-	}
-	if !t1.BackgroundColor.SameAs(t2.BackgroundColor) {
-		return false
-	}
-	if !t1.PrimaryColor.SameAs(t2.PrimaryColor) {
-		return false
-	}
-	if !t1.PositiveColor.SameAs(t2.PositiveColor) {
-		return false
-	}
-	if !t1.NegativeColor.SameAs(t2.NegativeColor) {
-		return false
-	}
-	return true
-}
 </file>
 
 <file path="internal/glance/utils.go">
@@ -9295,6 +9008,27 @@ func fetchRemoteServerInfo(infoReq *serverStatsRequest) (*sysinfo.SystemInfo, er
 }
 </file>
 
+<file path="internal/glance/widget-todo.go">
+package glance
+import (
+	"html/template"
+)
+var todoWidgetTemplate = mustParseTemplate("todo.html", "widget-base.html")
+type todoWidget struct {
+	widgetBase `yaml:",inline"`
+	cachedHTML template.HTML `yaml:"-"`
+	TodoID     string        `yaml:"id"`
+}
+func (widget *todoWidget) initialize() error {
+	widget.withTitle("To-do").withError(nil)
+	widget.cachedHTML = widget.renderTemplate(widget, todoWidgetTemplate)
+	return nil
+}
+func (widget *todoWidget) Render() template.HTML {
+	return widget.cachedHTML
+}
+</file>
+
 <file path="internal/glance/diagnose.go">
 package glance
 import (
@@ -9481,6 +9215,102 @@ func testDNSResolution(domain string) (string, error) {
 		}
 	}
 	return strings.Join(ipStrings, ", "), err
+}
+</file>
+
+<file path="internal/glance/theme.go">
+package glance
+import (
+	"fmt"
+	"html/template"
+	"net/http"
+	"time"
+)
+var (
+	themeStyleTemplate         = mustParseTemplate("theme-style.gotmpl")
+	themePresetPreviewTemplate = mustParseTemplate("theme-preset-preview.html")
+)
+func (a *application) handleThemeChangeRequest(w http.ResponseWriter, r *http.Request) {
+	themeKey := r.PathValue("key")
+	properties, exists := a.Config.Theme.Presets.Get(themeKey)
+	if !exists && themeKey != "default" {
+		w.WriteHeader(http.StatusNotFound)
+		return
+	}
+	if themeKey == "default" {
+		properties = &a.Config.Theme.themeProperties
+	}
+	http.SetCookie(w, &http.Cookie{
+		Name:     "theme",
+		Value:    themeKey,
+		Path:     a.Config.Server.BaseURL + "/",
+		SameSite: http.SameSiteLaxMode,
+		Expires:  time.Now().Add(2 * 365 * 24 * time.Hour),
+	})
+	w.Header().Set("Content-Type", "text/css")
+	w.Header().Set("X-Scheme", ternary(properties.Light, "light", "dark"))
+	w.Write([]byte(properties.CSS))
+}
+type themeProperties struct {
+	BackgroundColor          *hslColorField `yaml:"background-color"`
+	PrimaryColor             *hslColorField `yaml:"primary-color"`
+	PositiveColor            *hslColorField `yaml:"positive-color"`
+	NegativeColor            *hslColorField `yaml:"negative-color"`
+	Light                    bool           `yaml:"light"`
+	ContrastMultiplier       float32        `yaml:"contrast-multiplier"`
+	TextSaturationMultiplier float32        `yaml:"text-saturation-multiplier"`
+	Key                  string        `yaml:"-"`
+	CSS                  template.CSS  `yaml:"-"`
+	PreviewHTML          template.HTML `yaml:"-"`
+	BackgroundColorAsHex string        `yaml:"-"`
+}
+func (t *themeProperties) init() error {
+	css, err := executeTemplateToString(themeStyleTemplate, t)
+	if err != nil {
+		return fmt.Errorf("compiling theme style: %v", err)
+	}
+	t.CSS = template.CSS(whitespaceAtBeginningOfLinePattern.ReplaceAllString(css, ""))
+	previewHTML, err := executeTemplateToString(themePresetPreviewTemplate, t)
+	if err != nil {
+		return fmt.Errorf("compiling theme preview: %v", err)
+	}
+	t.PreviewHTML = template.HTML(previewHTML)
+	if t.BackgroundColor != nil {
+		t.BackgroundColorAsHex = t.BackgroundColor.ToHex()
+	} else {
+		t.BackgroundColorAsHex = "#151519"
+	}
+	return nil
+}
+func (t1 *themeProperties) SameAs(t2 *themeProperties) bool {
+	if t1 == nil && t2 == nil {
+		return true
+	}
+	if t1 == nil || t2 == nil {
+		return false
+	}
+	if t1.Light != t2.Light {
+		return false
+	}
+	if t1.ContrastMultiplier != t2.ContrastMultiplier {
+		return false
+	}
+	if t1.TextSaturationMultiplier != t2.TextSaturationMultiplier {
+		return false
+	}
+	if !t1.BackgroundColor.SameAs(t2.BackgroundColor) {
+		return false
+	}
+	if !t1.PrimaryColor.SameAs(t2.PrimaryColor) {
+		return false
+	}
+	if !t1.PositiveColor.SameAs(t2.PositiveColor) {
+		return false
+	}
+	if !t1.NegativeColor.SameAs(t2.NegativeColor) {
+		return false
+	}
+	return true
 }
 </file>
 
@@ -10780,6 +10610,108 @@ func (w *widgetBase) scheduleEarlyUpdate() *widgetBase {
 	}
 	return w
 }
+</file>
+
+<file path="taskfile.yml">
+# yaml-language-server: $schema=https://taskfile.dev/schema.json
+version: "3"
+vars:
+  # ── Binary name ──────────────────────────────────────────────────────────
+  APP_NAME: "Banter"
+  GOOS:
+    sh: go env GOOS
+  GOARCH:
+    sh: go env GOARCH
+  # Built-in Go command that returns ".exe" on Windows, and "" on Mac/Linux
+  EXT:
+    sh: go env GOEXE
+  BIN_DIR: "./bin"
+  DIST_DIR: "./dist"
+  BINARY: "{{.BIN_DIR}}/{{.APP_NAME}}{{.EXT}}"
+  # ── MISC ─────────────────────────────────────────────────────────────────
+  PKG_PREFIX: "{{.MODULE}}/internal/version"
+  LDFLAGS: >-
+    -s -w
+    -X '{{.PKG_PREFIX}}.Commit={{.GIT_COMMIT}}'
+  GO_CMD: "go"
+  MODULE:
+    sh: go list -m 2>/dev/null || echo "unknown"
+  GIT_COMMIT:
+    sh: git rev-parse --short HEAD 2>/dev/null || echo "unknown"
+  #  CUSTOM VARIABLES
+  SUMEXT: "**/*.go,**/*.html,**/*.css,**/*.yml"
+  IGNOREXT: ".secrets"
+env:
+  CGO_ENABLED: "0" # safe default; override per-task if needed
+# ---------------------------------------------------------------------------
+tasks:
+  default:
+    desc: "Show available tasks"
+    silent: true
+    cmds:
+      - task --list
+  build:
+    desc: "Build for the current OS/arch ({{.GOOS}}/{{.GOARCH}})"
+    cmds:
+      - mkdir -p {{.BIN_DIR}}
+      - >-
+        {{.GO_CMD}} build
+        -trimpath
+        -ldflags "{{.LDFLAGS}}"
+        -o {{.BINARY}}
+        .
+    generates:
+      - "{{.BINARY}}"
+    sources:
+      - "**/*.go"
+      - "go.mod"
+      - "go.sum"
+  build:darwin:
+    desc: "Cross-compile → darwin/arm64 (Apple Silicon)"
+    env:
+      GOOS: darwin
+      GOARCH: arm64
+      CGO_ENABLED: "0"
+    cmds:
+      - mkdir -p {{.DIST_DIR}}
+      - >-
+        {{.GO_CMD}} build
+        -trimpath
+        -ldflags "{{.LDFLAGS}}"
+        -o {{.DIST_DIR}}/{{.APP_NAME}}-darwin-arm64
+        .
+  build:windows:
+    desc: "Cross-compile → windows/amd64"
+    env:
+      GOOS: windows
+      GOARCH: amd64
+      CGO_ENABLED: "0"
+    cmds:
+      - mkdir -p {{.DIST_DIR}}
+      - >-
+        {{.GO_CMD}} build
+        -trimpath
+        -ldflags "{{.LDFLAGS}}"
+        -o {{.DIST_DIR}}/{{.APP_NAME}}-windows-amd64.exe
+        .
+  build:all:
+    desc: "Cross-compile for all supported platforms → dist/"
+    deps:
+      - build:darwin
+      - build:windows
+    cmds:
+      - echo "✅ All platform binaries written to {{.DIST_DIR}}/"
+  run:
+    desc: "Build & run (pass args with -- <args>)"
+    deps: [build]
+    cmds:
+      - "{{.BINARY}} {{.CLI_ARGS}}"
+  # ── CUSTOM ─────────────────────────────────────────────────────────
+  sum:
+    desc: "Runs repomix with scoped output"
+    silent: true
+    cmds:
+      - repomix --output "{{.APP_NAME}}.xml" --include "{{.SUMEXT}}" --ignore "{{.IGNOREXT}}"
 </file>
 
 <file path="internal/glance/config.go">
