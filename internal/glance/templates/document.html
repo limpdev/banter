@@ -1,14 +1,46 @@
 <!DOCTYPE html>
-<html lang="en" id="top" data-theme="{{ .Request.Theme.Key }}" data-scheme="{{ if .Request.Theme.Light }}light{{ else }}dark{{ end }}">
+<html lang="en" id="top" data-theme="{{ .Request.Theme.Key }}"
+    data-scheme="{{ if .Request.Theme.Light }}light{{ else }}dark{{ end }}">
+
 <head>
     {{ block "document-head-before" . }}{{ end }}
+    <!-- Reactivity Foundation -->
+    <script src="https://unpkg.com/htmx.org@1.9.12"></script>
+    <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
     <script>
-    if (navigator.platform === 'iPhone') document.documentElement.classList.add('ios');
-    const pageData = {
+        function setupWebSocket() {
+            const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+            const ws = new WebSocket(`${protocol}//${window.location.host}/ws`);
+            ws.onmessage = function (event) {
+                const html = event.data;
+                // Parse the incoming HTML
+                const parser = new DOMParser();
+                const doc = parser.parseFromString(html, 'text/html');
+                const newElement = doc.body.firstElementChild;
+                if (newElement && newElement.id) {
+                    const existing = document.getElementById(newElement.id);
+                    if (existing) {
+                        existing.outerHTML = newElement.outerHTML;
+                        // Tell HTMX to process the new element
+                        if (window.htmx) {
+                            htmx.process(document.getElementById(newElement.id));
+                        }
+                    }
+                }
+            };
+            ws.onclose = function () {
+                setTimeout(setupWebSocket, 5000); // Reconnect
+            };
+        }
+        setupWebSocket();
+    </script>
+    <script>
+        if (navigator.platform === 'iPhone') document.documentElement.classList.add('ios');
+        const pageData = {
         /*{{ if .Page }}*/slug: "{{ .Page.Slug }}",/*{{ end }}*/
-        baseURL: "{{ .App.Config.Server.BaseURL }}",
-        theme: "{{ .Request.Theme.Key }}",
-    };
+            baseURL: "{{ .App.Config.Server.BaseURL }}",
+            theme: "{{ .Request.Theme.Key }}",
+        };
     </script>
     <title>{{ block "document-title" . }}{{ end }}</title>
     <meta charset="UTF-8">
@@ -23,12 +55,21 @@
     <link rel="manifest" href='{{ .App.VersionedAssetPath "manifest.json" }}'>
     <link rel="icon" type="{{ .App.Config.Branding.FaviconType }}" href="{{ .App.Config.Branding.FaviconURL }}" />
     <link rel="stylesheet" href='{{ .App.StaticAssetPath "css/bundle.css" }}'>
-    <style id="theme-style">{{ .Request.Theme.CSS }}</style>
-    {{ if .App.Config.Theme.CustomCSSFile }}<link rel="stylesheet" href="{{ .App.Config.Theme.CustomCSSFile }}?v={{ .App.CreatedAt.Unix }}">{{ end }}
+    <style id="theme-style">
+        {
+                {
+                .Request.Theme.CSS
+            }
+        }
+    </style>
+    {{ if .App.Config.Theme.CustomCSSFile }}
+    <link rel="stylesheet" href="{{ .App.Config.Theme.CustomCSSFile }}?v={{ .App.CreatedAt.Unix }}">{{ end }}
     {{ block "document-head-after" . }}{{ end }}
     {{ if .App.Config.Document.Head }}{{ .App.Config.Document.Head }}{{ end }}
 </head>
+
 <body>
-{{ template "document-body" . }}
+    {{ template "document-body" . }}
 </body>
+
 </html>

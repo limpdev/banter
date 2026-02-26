@@ -40,6 +40,24 @@ func (widget *monitorWidget) initialize() error {
 	return nil
 }
 
+func (widget *monitorWidget) setProviders(providers *widgetProviders) {
+	widget.widgetBase.setProviders(providers)
+	if providers != nil && providers.hub != nil {
+		go func() {
+			dur := widget.cacheDuration
+			if dur <= 0 {
+				dur = 5 * time.Minute
+			}
+			ticker := time.NewTicker(dur)
+			defer ticker.Stop()
+			for range ticker.C {
+				widget.update(context.Background())
+				providers.hub.broadcastHTML(string(widget.Render()))
+			}
+		}()
+	}
+}
+
 func (widget *monitorWidget) update(ctx context.Context) {
 	requests := make([]*SiteStatusRequest, len(widget.Sites))
 

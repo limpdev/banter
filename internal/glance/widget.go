@@ -128,6 +128,7 @@ type widget interface {
 	Render() template.HTML
 	GetType() string
 	GetID() uint64
+	GetHTMXTrigger() template.HTMLAttr
 
 	initialize() error
 	requiresUpdate(*time.Time) bool
@@ -168,6 +169,7 @@ type widgetBase struct {
 
 type widgetProviders struct {
 	assetResolver func(string) string
+	hub           *hub
 }
 
 func (w *widgetBase) requiresUpdate(now *time.Time) bool {
@@ -208,6 +210,15 @@ func (widget *widgetBase) handleRequest(w http.ResponseWriter, r *http.Request) 
 
 func (w *widgetBase) GetType() string {
 	return w.Type
+}
+
+func (w *widgetBase) GetHTMXTrigger() template.HTMLAttr {
+	if w.cacheType == cacheTypeDuration && w.cacheDuration > 0 {
+		return template.HTMLAttr(fmt.Sprintf(`hx-trigger="every %ds"`, int(w.cacheDuration.Seconds())))
+	} else if w.cacheType == cacheTypeOnTheHour {
+		return template.HTMLAttr(`hx-trigger="every 1h"`)
+	}
+	return ""
 }
 
 func (w *widgetBase) setProviders(providers *widgetProviders) {

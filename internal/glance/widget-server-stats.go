@@ -39,6 +39,24 @@ func (widget *serverStatsWidget) initialize() error {
 	return nil
 }
 
+func (widget *serverStatsWidget) setProviders(providers *widgetProviders) {
+	widget.widgetBase.setProviders(providers)
+	if providers != nil && providers.hub != nil {
+		go func() {
+			dur := widget.cacheDuration
+			if dur <= 0 {
+				dur = 15 * time.Second
+			}
+			ticker := time.NewTicker(dur)
+			defer ticker.Stop()
+			for range ticker.C {
+				widget.update(context.Background())
+				providers.hub.broadcastHTML(string(widget.Render()))
+			}
+		}()
+	}
+}
+
 func (widget *serverStatsWidget) update(context.Context) {
 	// Refactor later, most of it may change depending on feedback
 	var wg sync.WaitGroup

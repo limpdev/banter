@@ -1,446 +1,154 @@
-<p align="center"><img src="docs/logo.png"></p>
-<h1 align="center">Glance</h1>
-<p align="center">
-  <a href="#installation">Install</a> •
-  <a href="docs/configuration.md#configuring-glance">Configuration</a> •
-  <a href="https://discord.com/invite/7KQ7Xa9kJd">Discord</a> •
-  <a href="https://github.com/sponsors/glanceapp">Sponsor</a>
-</p>
-<p align="center">
-  <a href="https://github.com/glanceapp/community-widgets">Community widgets</a> •
-  <a href="docs/preconfigured-pages.md">Preconfigured pages</a> •
-  <a href="docs/themes.md">Themes</a>
-</p>
+# Implementation Plan
 
-<p align="center">A lightweight, highly customizable dashboard that displays<br> your feeds in a beautiful, streamlined interface</p>
+**Goal**: Transform the static dashboard into a fully reactive, Go-native application using `HTMX`, `Alpine.js`, and `WebSockets`.
 
-![](docs/images/readme-main-image.png)
+## Analysis Summary
 
-## Features
-### Various widgets
-* RSS feeds
-* Subreddit posts
-* Hacker News posts
-* Weather forecasts
-* YouTube channel uploads
-* Twitch channels
-* Market prices
-* Docker containers status
-* Server stats
-* Custom widgets
-* [and many more...](docs/configuration.md#configuring-glance)
+The Claude analysis in the README made several assumptions based on typical Go web applications that are **inaccurate** for this specific codebase:
 
-### Fast and lightweight
-* Low memory usage
-* Few dependencies
-* Minimal vanilla JS
-* Single <20mb binary available for multiple OSs & architectures and just as small Docker container
-* Uncached pages usually load within ~1s (depending on internet speed and number of widgets)
+1. **No `bluemonday`**: The project does not use `bluemonday` for sanitization.
+2. **No CSP Headers**: The backend does not set strict `Content-Security-Policy` headers blocking inline scripts.
+3. **Existing Script Support**: The [widget-html.go](file:///c:/Users/drewg/bin/exe/banter/internal/glance/widget-html.go) component currently allows arbitrary HTML (including `<script>`) to be configured and passed unconditionally as `template.HTML`.
 
-### Tons of customizability
-* Different layouts
-* As many pages/tabs as you need
-* Numerous configuration options for each widget
-* Multiple styles for some widgets
-* Custom CSS
+The actual constraint preventing scripts in _other_ widgets is Go's `html/template` standard context-aware escaping.
 
-### Optimized for mobile devices
-Because you'll want to take it with you on the go.
+Since our goal is to fork and spin off if successful, our plan isn't just to "allow" scripts, but to **build a genuinely reactive framework** into the core.
 
-![](docs/images/mobile-preview.png)
+## Proposed Changes
 
-### Themeable
-Easily create your own theme by tweaking a few numbers or choose from one of the [already available themes](docs/themes.md).
+### Phase 1: Foundation (Global Reactivity)
 
-![](docs/images/themes-example.png)
+Integrate reactivity libraries directly into the global document template, removing the need for users to manually supply them.
 
-<br>
+#### [MODIFY] internal/glance/templates/document.html
 
-## Configuration
-Configuration is done through YAML files, to learn more about how the layout works, how to add more pages and how to configure widgets, visit the [configuration documentation](docs/configuration.md#configuring-glance).
-<details>
-<summary><strong>Preview example configuration file</strong></summary>
-<br>
+- Inject `htmx.org` and `alpinejs` via `<script src="...">` tags into the `<head>` block.
+- This provides a globally available reactivity foundation for all widgets.
 
-```yaml
-pages:
-  - name: Home
-    columns:
-      - size: small
-        widgets:
-          - type: calendar
-            first-day-of-week: monday
+### Phase 2: Widget Partial Rendering (HTMX Support)
 
-          - type: rss
-            limit: 10
-            collapse-after: 3
-            cache: 12h
-            feeds:
-              - url: https://selfh.st/rss/
-                title: selfh.st
-                limit: 4
-              - url: https://ciechanow.ski/atom.xml
-              - url: https://www.joshwcomeau.com/rss.xml
-                title: Josh Comeau
-              - url: https://samwho.dev/rss.xml
-              - url: https://ishadeed.com/feed.xml
-                title: Ahmad Shadeed
+HTMX shines when the server can return partial HTML fragments. Currently, Glance builds the whole page at once.
 
-          - type: twitch-channels
-            channels:
-              - theprimeagen
-              - j_blow
-              - piratesoftware
-              - cohhcarnage
-              - christitustech
-              - EJ_SA
+#### [MODIFY] internal/glance/glance.go (or new router file)
 
-      - size: full
-        widgets:
-          - type: group
-            widgets:
-              - type: hacker-news
-              - type: lobsters
+- Add a new API endpoint, e.g., `GET /api/widget/{id}` or `GET /api/widget/{type}`.
+- This endpoint will render and return ONLY the `<article>` block for a specific widget.
 
-          - type: videos
-            channels:
-              - UCXuqSBlHAE6Xw-yeJA0Tunw # Linus Tech Tips
-              - UCR-DXc1voovS8nhAvccRZhg # Jeff Geerling
-              - UCsBjURrPoezykLs9EqgamOA # Fireship
-              - UCBJycsmduvYEL83R_U4JriQ # Marques Brownlee
-              - UCHnyfMqiRRG1u-2MsSQLbXA # Veritasium
+#### [MODIFY] internal/glance/templates/widget-base.html
 
-          - type: group
-            widgets:
-              - type: reddit
-                subreddit: technology
-                show-thumbnails: true
-              - type: reddit
-                subreddit: selfhosted
-                show-thumbnails: true
+- Add `hx-get="/api/widget/..."` and `hx-trigger="every XXXs"` attributes to widgets that need periodic polling (e.g., weather, monitor, server-stats).
+- This replaces the current need for full-page reloads.
 
-      - size: small
-        widgets:
-          - type: weather
-            location: London, United Kingdom
-            units: metric
-            hour-format: 12h
+### Phase 3: WebSocket Live Updates
 
-          - type: markets
-            markets:
-              - symbol: SPY
-                name: S&P 500
-              - symbol: BTC-USD
-                name: Bitcoin
-              - symbol: NVDA
-                name: NVIDIA
-              - symbol: AAPL
-                name: Apple
-              - symbol: MSFT
-                name: Microsoft
+For true real-time widgets, polling isn't enough. We will introduce a WebSocket hub.
 
-          - type: releases
-            cache: 1d
-            repositories:
-              - glanceapp/glance
-              - go-gitea/gitea
-              - immich-app/immich
-              - syncthing/syncthing
+#### [NEW] internal/glance/hub.go (or similar)
+
+- Implement a standard Go WebSocket hub (using `gorilla/websocket` or the standard library `/x/net/websocket`).
+- The hub will broadcast data payload events to connected clients.
+
+#### [MODIFY] internal/glance/main.go
+
+- Register a `/ws` endpoint that upgrades HTTP requests to WebSocket connections.
+
+#### [MODIFY] internal/glance/templates/document.html
+
+- Add a small globally available JS snippet to establish the WebSocket connection on page load and route incoming messages to widgets via HTMX extension (`htmx-ws`) or Alpine.js event listeners.
+
+### Phase 4: Refactoring Existing Widgets
+
+With the new reactive core, we'll rewrite select widgets to demonstrate the system.
+
+- **Server Stats / Monitor Widgets**: Update to receive data via WebSocket pushes instead of static generation.
+- **Interactive Widgets**: Use Alpine.js for local state (tabs, modals, collapsible sections) directly inside the widget templates without needing roundtrips to the Go server.
+
+## Verification Plan
+
+### Automated Tests
+
+- Run `go test ./...` to ensure no existing routing/parsing is broken.
+
+### Manual Verification
+
+1. Verify that HTMX and Alpine.js load correctly in the browser console.
+2. Add an HTMX polling attribute to an existing widget (like the clock or weather) and verify network requests in DevTools.
+3. Connect to the `/ws` endpoint via a browser console and assert that broadcast messages are received.
+4. Render a partial widget via direct `curl` or browser request to the newly created `/api/widget/{id}` endpoint and assert ONLY that widget's HTML is returned.
+
+---
+
+# Walkthrough: Genuinely Reactive Dashboards
+
+We successfully transformed the static Glance fork into a fully reactive application without introducing the massive overhead of a Single Page Application (SPA).
+
+## 1. Global Reactivity Pipeline
+
+Reactivity libraries are now injected globally, freeing users from having to specify them via custom widgets.
+
+[document.html](file:///c:/Users/drewg/bin/exe/banter/internal/glance/templates/document.html) now provides:
+
+- **[HTMX](file:///c:/Users/drewg/bin/exe/banter/internal/glance/widget.go#215-223)**: Allows HTML fragments to dynamically swap without full-page reloads.
+- **`Alpine.js`**: A lightweight reactive library used directly inside templates for instantaneous, client-side interactions.
+
+## 2. HTMX Partial Rendering
+
+Widgets used to lock the entire page while rendering. Now, they expose a dedicated render endpoint:
+
+In [glance.go](file:///c:/Users/drewg/bin/exe/banter/internal/glance/glance.go), a new endpoint handles partials:
+
+```go
+mux.HandleFunc("/api/widgets/{widget}/{path...}", a.handleWidgetRequest)
+// Intercepts `.../render` to execute just the `<article>` widget block.
 ```
-</details>
 
-<br>
+In [widget-base.html](file:///c:/Users/drewg/bin/exe/banter/internal/glance/templates/widget-base.html):
+All widgets automatically get `id="widget-XXX"` and `hx-get="/api/widgets/XXX/render"`, along with auto-generated polling schedules based on their Go configured `cacheDuration`.
 
-## Installation
+## 3. WebSockets Hub
 
-Choose one of the following methods:
+For widgets requiring real-time, server-initiated pushes (e.g., live server stats), we implemented a native Go WebSocket hub.
 
-<details>
-<summary><strong>Docker compose using provided directory structure (recommended)</strong></summary>
-<br>
+[hub.go](file:///c:/Users/drewg/bin/exe/banter/internal/glance/hub.go) maintains connected clients and runs a broadcast channel. In [document.html](file:///c:/Users/drewg/bin/exe/banter/internal/glance/templates/document.html), a global WebSocket listener waits for incoming pure-HTML payloads from the Go backend, seamlessly swapping updated widget blocks into the DOM in real-time.
 
-Create a new directory called `glance` as well as the template files within it by running:
+## 4. Demonstrating the Framework
+
+### Backend Broadcasts (WebSockets)
+
+We modified the **Server Stats** and **Monitor** widgets to override [setProviders](file:///c:/Users/drewg/bin/exe/banter/internal/glance/widget.go#135-136). They now launch isolated background goroutines that check for updates on their configured ticker schedule, automatically pushing newly minted HTML to all connected browsers.
+
+[widget-server-stats.go](file:///c:/Users/drewg/bin/exe/banter/internal/glance/widget-server-stats.go#L40-L55)
+[widget-monitor.go](file:///c:/Users/drewg/bin/exe/banter/internal/glance/widget-monitor.go#L41-L56)
+
+### Local UX Interactivity (Alpine.js)
+
+We fully rewrote the **Group** widget tabs logic. Instead of relying on spaghetti JavaScript event listeners injected remotely, the [group.html](file:///c:/Users/drewg/bin/exe/banter/internal/glance/templates/group.html) template now self-manages state cleanly using Alpine:
+
+```html
+<div x-data="{ currentTab: 0 }">
+  <button
+    @click="currentTab = {{ $i }}"
+    :class="{ 'widget-group-title-current': currentTab === {{ $i }} }"
+  ></button>
+</div>
+```
+
+No Go round-trips required for tab switching.
+
+<details><summary> EFFECTED FILES LISTING</summary>
 
 ```bash
-mkdir glance && cd glance && curl -sL https://github.com/glanceapp/docker-compose-template/archive/refs/heads/main.tar.gz | tar -xzf - --strip-components 2
+glance.go
+hub.go
+widget.go
+widget-monitor.go
+widget-server-stats.go
+group.html
+widget-base.html
 ```
-
-*[click here to view the files that will be created](https://github.com/glanceapp/docker-compose-template/tree/main/root)*
-
-Then, edit the following files as desired:
-* `docker-compose.yml` to configure the port, volumes and other containery things
-* `config/home.yml` to configure the widgets or layout of the home page
-* `config/glance.yml` if you want to change the theme or add more pages
-
-<details>
-<summary>Other files you may want to edit</summary>
-
-* `.env` to configure environment variables that will be available inside configuration files
-* `assets/user.css` to add custom CSS
-</details>
-
-When ready, run:
-
-```bash
-docker compose up -d
-```
-
-If you encounter any issues, you can check the logs by running:
-
-```bash
-docker compose logs
-```
-
-<hr>
-</details>
-
-<details>
-<summary><strong>Docker compose manual</strong></summary>
-<br>
-
-Create a `docker-compose.yml` file with the following contents:
-
-```yaml
-services:
-  glance:
-    container_name: glance
-    image: glanceapp/glance
-    restart: unless-stopped
-    volumes:
-      - ./config:/app/config
-    ports:
-      - 8080:8080
-```
-
-Then, create a new directory called `config` and download the example starting [`glance.yml`](https://github.com/glanceapp/glance/blob/main/docs/glance.yml) file into it by running:
-
-```bash
-mkdir config && wget -O config/glance.yml https://raw.githubusercontent.com/glanceapp/glance/refs/heads/main/docs/glance.yml
-```
-
-Feel free to edit the `glance.yml` file to your liking, and when ready run:
-
-```bash
-docker compose up -d
-```
-
-If you encounter any issues, you can check the logs by running:
-
-```bash
-docker logs glance
-```
-
-<hr>
-</details>
-
-<details>
-<summary><strong>Manual binary installation</strong></summary>
-<br>
-
-Precompiled binaries are available for Linux, Windows and macOS (x86, x86_64, ARM and ARM64 architectures).
-
-### Linux
-
-Visit the [latest release page](https://github.com/glanceapp/glance/releases/latest) for available binaries. You can place the binary in `/opt/glance/` and have it start with your server via a [systemd service](https://linuxhandbook.com/create-systemd-services/). By default, when running the binary, it will look for a `glance.yml` file in the directory it's placed in. To specify a different path for the config file, use the `--config` option:
-
-```bash
-/opt/glance/glance --config /etc/glance.yml
-```
-
-To grab a starting template for the config file, run:
-
-```bash
-wget https://raw.githubusercontent.com/glanceapp/glance/refs/heads/main/docs/glance.yml
-```
-
-### Windows
-
-Download and extract the executable from the [latest release](https://github.com/glanceapp/glance/releases/latest) (most likely the file called `glance-windows-amd64.zip` if you're on a 64-bit system) and place it in a folder of your choice. Then, create a new text file called `glance.yml` in the same folder and paste the content from [here](https://raw.githubusercontent.com/glanceapp/glance/refs/heads/main/docs/glance.yml) in it. You should then be able to run the executable and access the dashboard by visiting `http://localhost:8080` in your browser.
-
-
-
-<hr>
-</details>
-
-<details>
-<summary><strong>Other</strong></summary>
-<br>
-
-Glance can also be installed through the following 3rd party channels:
-* [Proxmox VE Helper Script](https://community-scripts.github.io/ProxmoxVE/scripts?id=glance)
-* [NixOS package](https://search.nixos.org/packages?channel=unstable&show=glance)
-* [Coolify.io](https://coolify.io/docs/services/glance/)
-
-<hr>
-</details>
-
-<br>
-
-## Common issues
-<details>
-<summary><strong>Requests timing out</strong></summary>
-
-The most common cause of this is when using Pi-Hole, AdGuard Home or other ad-blocking DNS services, which by default have a fairly low rate limit. Depending on the number of widgets you have in a single page, this limit can very easily be exceeded. To fix this, increase the rate limit in the settings of your DNS service.
-
-If using Podman, in some rare cases the timeout can be caused by an unknown issue, in which case it may be resolved by adding the following to the bottom of your `docker-compose.yml` file:
-```yaml
-networks:
-  podman:
-    external: true
-```
-</details>
-
-<details>
-<summary><strong>Broken layout for markets, bookmarks or other widgets</strong></summary>
-
-This is almost always caused by the browser extension Dark Reader. To fix this, disable dark mode for the domain where Glance is hosted.
-</details>
-
-<details>
-<summary><strong>cannot unmarshal !!map into []glance.page</strong></summary>
-
-The most common cause of this is having a `pages` key in your `glance.yml` and then also having a `pages` key inside one of your included pages. To fix this, remove the `pages` key from the top of your included pages.
 
 </details>
 
-<br>
+### What's Next?
 
-## FAQ
-<details>
-<summary><strong>Does the information on the page update automatically?</strong></summary>
-No, a page refresh is required to update the information. Some things do dynamically update where it makes sense, like the clock widget and the relative time showing how long ago something happened.
-</details>
-
-<details>
-<summary><strong>How frequently do widgets update?</strong></summary>
-No requests are made periodically in the background, information is only fetched upon loading the page and then cached. The default cache lifetime is different for each widget and can be configured.
-</details>
-
-<details>
-<summary><strong>Can I create my own widgets?</strong></summary>
-
-Yes, there are multiple ways to create custom widgets:
-* `iframe` widget - allows you to embed things from other websites
-* `html` widget - allows you to insert your own static HTML
-* `extension` widget - fetch HTML from a URL
-* `custom-api` widget - fetch JSON from a URL and render it using custom HTML
-</details>
-
-<details>
-<summary><strong>Can I change the title of a widget?</strong></summary>
-
-Yes, the title of all widgets can be changed by specifying the `title` property in the widget's configuration:
-
-```yaml
-- type: rss
-  title: My custom title
-
-- type: markets
-  title: My custom title
-
-- type: videos
-  title: My custom title
-
-# and so on for all widgets...
-```
-</details>
-
-<br>
-
-## Feature requests
-
-New feature suggestions are always welcome and will be considered, though please keep in mind that some of them may be out of scope for what the project is trying to achieve (or is reasonably capable of). If you have an idea for a new feature and would like to share it, you can do so [here](https://github.com/glanceapp/glance/issues/new?template=feature_request.yml).
-
-Feature requests are tagged with one of the following:
-
-* [Roadmap](https://github.com/glanceapp/glance/labels/roadmap) - will be implemented in a future release
-* [Backlog](https://github.com/glanceapp/glance/labels/backlog) - may be implemented in the future but needs further feedback or interest from the community
-* [Icebox](https://github.com/glanceapp/glance/labels/icebox) - no plans to implement as it doesn't currently align with the project's goals or capabilities, may be revised at a later date
-
-<br>
-
-## Building from source
-
-Choose one of the following methods:
-
-<details>
-<summary><strong>Build binary with Go</strong></summary>
-<br>
-
-Requirements: [Go](https://go.dev/dl/) >= v1.23
-
-To build the project for your current OS and architecture, run:
-
-```bash
-go build -o build/glance .
-```
-
-To build for a specific OS and architecture, run:
-
-```bash
-GOOS=linux GOARCH=amd64 go build -o build/glance .
-```
-
-[*click here for a full list of GOOS and GOARCH combinations*](https://go.dev/doc/install/source#:~:text=$GOOS%20and%20$GOARCH)
-
-Alternatively, if you just want to run the app without creating a binary, like when you're testing out changes, you can run:
-
-```bash
-go run .
-```
-<hr>
-</details>
-
-<details>
-<summary><strong>Build project and Docker image with Docker</strong></summary>
-<br>
-
-Requirements: [Docker](https://docs.docker.com/engine/install/)
-
-To build the project and image using just Docker, run:
-
-*(replace `owner` with your name or organization)*
-
-```bash
-docker build -t owner/glance:latest .
-```
-
-If you wish to push the image to a registry (by default Docker Hub), run:
-
-```bash
-docker push owner/glance:latest
-```
-
-<hr>
-</details>
-
-<br>
-
-## Contributing guidelines
-
-* Before working on a new feature it's preferable to submit a feature request first and state that you'd like to implement it yourself
-* Please don't submit PRs for feature requests that are either in the roadmap<sup>[1]</sup>, backlog<sup>[2]</sup> or icebox<sup>[3]</sup>
-* Use `dev` for the base branch if you're adding new features or fixing bugs, otherwise use `main`
-* Avoid introducing new dependencies
-* Avoid making backwards-incompatible configuration changes
-* Avoid introducing new colors or hard-coding colors, use the standard `primary`, `positive` and `negative`
-* For icons, try to use [heroicons](https://heroicons.com/) where applicable
-* Provide a screenshot of the changes if UI related where possible
-* No `package.json`
-
-<details>
-<summary><strong><sup>[1] [2] [3]</sup></strong></summary>
-
-[1] The feature likely already has work put into it that may conflict with your implementation
-
-[2] The demand, implementation or functionality for this feature is not yet clear
-
-[3] No plans to add this feature for the time being
-
-</details>
-
-<br>
-
-## Thank you
-
-To all the people who were generous enough to [sponsor](https://github.com/sponsors/glanceapp) the project and to everyone who has contributed in any way, be it PRs, submitting issues, helping others in the discussions or Discord server, creating guides and tools or just mentioning Glance on social media. Your support is greatly appreciated and helps keep the project going.
+The system is now fully prepped for advanced reactive experiments! You can drop an `hx-post` dynamically into a new widget template, or define a new background polling mechanism for any widget by utilizing the established WebSocket hub.

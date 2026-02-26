@@ -42,6 +42,8 @@ type application struct {
 	usernameHashToUsername map[string]string
 	authAttemptsMu         sync.Mutex
 	failedAuthAttempts     map[string]*failedAuthAttempt
+
+	hub *hub
 }
 
 func newApplication(c *config) (*application, error) {
@@ -51,8 +53,11 @@ func newApplication(c *config) (*application, error) {
 		Config:     *c,
 		slugToPage: make(map[string]*page),
 		widgetByID: make(map[uint64]widget),
+		hub:        newHub(),
 	}
 	config := &app.Config
+
+	go app.hub.run()
 
 	//
 	// Init auth
@@ -148,6 +153,7 @@ func newApplication(c *config) (*application, error) {
 
 	providers := &widgetProviders{
 		assetResolver: app.StaticAssetPath,
+		hub:           app.hub,
 	}
 
 	for p := range config.Pages {
@@ -402,26 +408,32 @@ func (a *application) handleNotFound(w http.ResponseWriter, _ *http.Request) {
 }
 
 func (a *application) handleWidgetRequest(w http.ResponseWriter, r *http.Request) {
-	// TODO: this requires a rework of the widget update logic so that rather
-	// than locking the entire page we lock individual widgets
-	w.WriteHeader(http.StatusNotImplemented)
+	widgetValue := r.PathValue("widget")
 
-	// widgetValue := r.PathValue("widget")
+	widgetID, err := strconv.ParseUint(widgetValue, 10, 64)
+	if err != nil {
+		a.handleNotFound(w, r)
+		return
+	}
 
-	// widgetID, err := strconv.ParseUint(widgetValue, 10, 64)
-	// if err != nil {
-	// 	a.handleNotFound(w, r)
-	// 	return
-	// }
+	widget, exists := a.widgetByID[widgetID]
+	if !exists {
+		a.handleNotFound(w, r)
+		return
+	}
 
-	// widget, exists := a.widgetByID[widgetID]
+	path := r.PathValue("path")
+	if path == "render" {
+		now := time.Now()
+		if widget.requiresUpdate(&now) {
+			widget.update(r.Context())
+		}
+		w.Header().Set("Content-Type", "text/html")
+		w.Write([]byte(widget.Render()))
+		return
+	}
 
-	// if !exists {
-	// 	a.handleNotFound(w, r)
-	// 	return
-	// }
-
-	// widget.handleRequest(w, r)
+	widget.handleRequest(w, r)
 }
 
 func (a *application) StaticAssetPath(asset string) string {
@@ -446,6 +458,7 @@ func (a *application) server() (func() error, func() error) {
 	}
 
 	mux.HandleFunc("/api/widgets/{widget}/{path...}", a.handleWidgetRequest)
+	mux.HandleFunc("/ws", a.hub.handleWebSocket)
 	mux.HandleFunc("GET /api/healthz", func(w http.ResponseWriter, _ *http.Request) {
 		w.WriteHeader(http.StatusOK)
 	})
@@ -509,6 +522,7 @@ func (a *application) server() (func() error, func() error) {
 	}
 
 	stop := func() error {
+		a.hub.close()
 		return server.Close()
 	}
 
