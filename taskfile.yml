@@ -1,12 +1,8 @@
 # yaml-language-server: $schema=https://taskfile.dev/schema.json
 version: "3"
-# ---------------------------------------------------------------------------
-# System-aware variables — resolved at runtime, not at parse time.
-# ---------------------------------------------------------------------------
 vars:
   # ── Binary name ──────────────────────────────────────────────────────────
   APP_NAME: "app"
-  # ── OS / Arch detection ──────────────────────────────────────────────────
   GOOS:
     sh: go env GOOS
   GOARCH:
@@ -35,12 +31,9 @@ vars:
   #  CUSTOM VARIABLES
   SUMEXT: "**/*.go,**/*.html,**/*.css,**/*.yml"
   IGNOREXT: ".secrets"
-
 env:
   CGO_ENABLED: "0" # safe default; override per-task if needed
   GOFLAGS: "{{.GOFLAGS}}"
-# ---------------------------------------------------------------------------
-# Tasks
 # ---------------------------------------------------------------------------
 tasks:
   opts:
@@ -106,8 +99,6 @@ tasks:
     deps: [build]
     cmds:
       - "{{.BINARY}} {{.CLI_ARGS}}"
-
-  # ── Lint / vet ────────────────────────────────────────────────────────────
   vet:
     desc: "Run go vet"
     cmds:
@@ -125,8 +116,6 @@ tasks:
     desc: "Run golangci-lint with auto-fix"
     cmds:
       - golangci-lint run --fix ./...
-
-  # ── Format ───────────────────────────────────────────────────────────────
   fmt:
     desc: "Format all Go source files"
     cmds:
@@ -146,8 +135,6 @@ tasks:
           exit 1
         fi
         echo "✅  All files formatted"
-
-  # ── Module management ─────────────────────────────────────────────────────
   tidy:
     desc: "go mod tidy"
     cmds:
