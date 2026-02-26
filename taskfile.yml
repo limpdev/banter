@@ -1,0 +1,284 @@
+# yaml-language-server: $schema=https://taskfile.dev/schema.json
+version: "3"
+# ---------------------------------------------------------------------------
+# System-aware variables — resolved at runtime, not at parse time.
+# ---------------------------------------------------------------------------
+vars:
+  # ── Binary name ──────────────────────────────────────────────────────────
+  APP_NAME: "app"
+  # ── OS / Arch detection ──────────────────────────────────────────────────
+  GOOS:
+    sh: go env GOOS
+  GOARCH:
+    sh: go env GOARCH
+  # Binary extension on Windows
+  EXT:
+    sh: |
+      if [ "$(go env GOOS)" = "windows" ]; then echo ".exe"; else echo ""; fi
+  # ── Output paths ─────────────────────────────────────────────────────────
+  BIN_DIR: "./bin"
+  DIST_DIR: "./dist"
+  BINARY: "{{.BIN_DIR}}/{{.APP_NAME}}{{.EXT}}"
+  # ── Common ldflags ───────────────────────────────────────────────────────
+  PKG_PREFIX: "{{.MODULE}}/internal/version"
+  LDFLAGS: >-
+    -s -w
+    -X '{{.PKG_PREFIX}}.Version={{.VERSION}}'
+    -X '{{.PKG_PREFIX}}.Commit={{.GIT_COMMIT}}'
+    -X '{{.PKG_PREFIX}}.BuildTime={{.BUILD_TIME}}'
+  # ── Go tooling ───────────────────────────────────────────────────────────
+  GO_CMD: "go"
+  GOFLAGS: ""
+  # ── Test config ──────────────────────────────────────────────────────────
+  TEST_FLAGS: "-race -timeout 120s"
+  COVERAGE_OUT: "./coverage.out"
+  COVERAGE_HTML: "./coverage.html"
+  # ── Module / package ─────────────────────────────────────────────────────
+  MODULE:
+    sh: go list -m 2>/dev/null || echo "unknown"
+  GIT_COMMIT:
+    sh: git rev-parse --short HEAD 2>/dev/null || echo "unknown"
+  GIT_TAG:
+    sh: git describe --tags --exact-match 2>/dev/null || echo ""
+  VERSION:
+    sh: |
+      tag=$(git describe --tags --exact-match 2>/dev/null)
+      [ -n "$tag" ] && echo "$tag" || echo "dev-$(git rev-parse --short HEAD 2>/dev/null || echo unknown)"
+  BUILD_TIME:
+    sh: date -u +"%Y-%m-%dT%H:%M:%SZ"
+  #  CUSTOM VARIABLES
+  SUMEXT: "**/*.go,**/*.html,**/*.css,**/*.yml"
+  IGNOREXT: ".secrets"
+
+env:
+  CGO_ENABLED: "0" # safe default; override per-task if needed
+  GOFLAGS: "{{.GOFLAGS}}"
+# ---------------------------------------------------------------------------
+# Tasks
+# ---------------------------------------------------------------------------
+tasks:
+  # ── Default ──────────────────────────────────────────────────────────────
+  opts:
+    desc: "Show available tasks"
+    silent: true
+    cmds:
+      - task --list
+  # ── Build (host OS/arch) ──────────────────────────────────────────────────
+  build:
+    desc: "Build for the current OS/arch ({{.GOOS}}/{{.GOARCH}})"
+    vars:
+      BINARY: "{{.BIN_DIR}}/{{.APP_NAME}}{{.EXT}}"
+    cmds:
+      - mkdir -p {{.BIN_DIR}}
+      - >-
+        {{.GO_CMD}} build
+        -trimpath
+        -ldflags "{{.LDFLAGS}}"
+        -o {{.BINARY}}
+        ./...
+    generates:
+      - "{{.BINARY}}"
+    sources:
+      - "**/*.go"
+      - "go.mod"
+      - "go.sum"
+  # ── Build (debug — with symbols, race detector, no trimpath) ─────────────
+  build:debug:
+    desc: "Build a debug binary (symbols retained, race detector enabled)"
+    vars:
+      BINARY_DBG: "{{.BIN_DIR}}/{{.APP_NAME}}-debug{{.EXT}}"
+    env:
+      CGO_ENABLED: "1" # race detector needs cgo
+    cmds:
+      - mkdir -p {{.BIN_DIR}}
+      - >-
+        {{.GO_CMD}} build
+        -race
+        -gcflags "all=-N -l"
+        -ldflags "{{.LDFLAGS}}"
+        -o {{.BINARY_DBG}}
+        ./...
+  # ── Cross-compile helpers ─────────────────────────────────────────────────
+  build:darwin:
+    desc: "Cross-compile → darwin/arm64 (Apple Silicon)"
+    env:
+      GOOS: darwin
+      GOARCH: arm64
+      CGO_ENABLED: "0"
+    cmds:
+      - mkdir -p {{.DIST_DIR}}
+      - >-
+        {{.GO_CMD}} build
+        -trimpath
+        -ldflags "{{.LDFLAGS}}"
+        -o {{.DIST_DIR}}/{{.APP_NAME}}-darwin-arm64
+        ./...
+  build:windows:
+    desc: "Cross-compile → windows/amd64"
+    env:
+      GOOS: windows
+      GOARCH: amd64
+      CGO_ENABLED: "0"
+    cmds:
+      - mkdir -p {{.DIST_DIR}}
+      - >-
+        {{.GO_CMD}} build
+        -trimpath
+        -ldflags "{{.LDFLAGS}}"
+        -o {{.DIST_DIR}}/{{.APP_NAME}}-windows-amd64.exe
+        ./...
+  build:all:
+    desc: "Cross-compile for all supported platforms → dist/"
+    deps:
+      - build:linux
+      - build:linux:arm64
+      - build:darwin
+      - build:darwin:arm64
+      - build:windows
+    cmds:
+      - echo "✅  All platform binaries written to {{.DIST_DIR}}/"
+  run:
+    desc: "Build & run (pass args with -- <args>)"
+    deps: [build]
+    cmds:
+      - "{{.BINARY}} {{.CLI_ARGS}}"
+
+  # ── Test ─────────────────────────────────────────────────────────────────
+  test:
+    desc: "Run the full test suite"
+    env:
+      CGO_ENABLED: "1" # -race requires cgo
+    cmds:
+      - "{{.GO_CMD}} test {{.TEST_FLAGS}} ./..."
+  test:short:
+    desc: "Run tests without the race detector (faster)"
+    cmds:
+      - "{{.GO_CMD}} test -short -timeout 60s ./..."
+  test:coverage:
+    desc: "Run tests and produce HTML coverage report"
+    env:
+      CGO_ENABLED: "1"
+    cmds:
+      - >-
+        {{.GO_CMD}} test {{.TEST_FLAGS}}
+        -coverprofile={{.COVERAGE_OUT}}
+        -covermode=atomic
+        ./...
+      - "{{.GO_CMD}} tool cover -html={{.COVERAGE_OUT}} -o {{.COVERAGE_HTML}}"
+      - echo "📊  Coverage report: {{.COVERAGE_HTML}}"
+  test:bench:
+    desc: "Run benchmarks"
+    cmds:
+      - "{{.GO_CMD}} test -run='^$' -bench=. -benchmem ./..."
+
+  # ── Lint / vet ────────────────────────────────────────────────────────────
+  vet:
+    desc: "Run go vet"
+    cmds:
+      - "{{.GO_CMD}} vet ./..."
+  lint:
+    desc: "Run golangci-lint (installs if missing)"
+    cmds:
+      - |
+        if ! command -v golangci-lint &>/dev/null; then
+          echo "⬇️  Installing golangci-lint {{.GOLANGCI_VERSION}} …"
+          go install github.com/golangci/golangci-lint/cmd/golangci-lint@{{.GOLANGCI_VERSION}}
+        fi
+      - golangci-lint run ./...
+  lint:fix:
+    desc: "Run golangci-lint with auto-fix"
+    cmds:
+      - golangci-lint run --fix ./...
+
+  # ── Format ───────────────────────────────────────────────────────────────
+  fmt:
+    desc: "Format all Go source files"
+    cmds:
+      - "{{.GO_CMD}} fmt ./..."
+      - |
+        if command -v goimports &>/dev/null; then
+          goimports -w .
+        fi
+  fmt:check:
+    desc: "Check formatting (non-zero exit if changes needed)"
+    cmds:
+      - |
+        unformatted=$(gofmt -l .)
+        if [ -n "$unformatted" ]; then
+          echo "❌  Unformatted files:"
+          echo "$unformatted"
+          exit 1
+        fi
+        echo "✅  All files formatted"
+
+  # ── Module management ─────────────────────────────────────────────────────
+  tidy:
+    desc: "go mod tidy"
+    cmds:
+      - "{{.GO_CMD}} mod tidy"
+  deps:upgrade:
+    desc: "Upgrade all direct dependencies to latest"
+    cmds:
+      - "{{.GO_CMD}} get -u ./..."
+      - "{{.GO_CMD}} mod tidy"
+  deps:verify:
+    desc: "Verify module checksums"
+    cmds:
+      - "{{.GO_CMD}} mod verify"
+
+  # ── Code generation ───────────────────────────────────────────────────────
+  generate:
+    desc: "Run go generate across the project"
+    cmds:
+      - "{{.GO_CMD}} generate ./..."
+
+  # ── Security ─────────────────────────────────────────────────────────────
+  vuln:
+    desc: "Run govulncheck (installs if missing)"
+    cmds:
+      - |
+        if ! command -v govulncheck &>/dev/null; then
+          go install golang.org/x/vuln/cmd/govulncheck@latest
+        fi
+      - govulncheck ./...
+
+  # ── Clean ────────────────────────────────────────────────────────────────
+  clean:
+    desc: "Remove build artefacts"
+    cmds:
+      - rm -rf {{.BIN_DIR}} {{.DIST_DIR}} {{.COVERAGE_OUT}} {{.COVERAGE_HTML}}
+      - "{{.GO_CMD}} clean -cache -testcache"
+  clean:all:
+    desc: "Deep clean including module cache"
+    deps: [clean]
+    cmds:
+      - "{{.GO_CMD}} clean -modcache"
+
+  # ── CI shorthand ─────────────────────────────────────────────────────────
+  ci:
+    desc: "Full CI pipeline: tidy → vet → fmt:check → test → build"
+    cmds:
+      - task: tidy
+      - task: vet
+      - task: fmt:check
+      - task: test
+      - task: build
+  info:
+    desc: "Print resolved build variables"
+    silent: true
+    cmds:
+      - echo "App       : {{.APP_NAME}}"
+      - echo "Module    : {{.MODULE}}"
+      - echo "Version   : {{.VERSION}}"
+      - echo "Commit    : {{.GIT_COMMIT}}"
+      - echo "BuildTime : {{.BUILD_TIME}}"
+      - echo "Host OS   : {{.GOOS}}/{{.GOARCH}}"
+      - echo "Binary    : {{.BINARY}}"
+      - echo "Go        : $(go version)"
+
+  # ── CUSTOM ─────────────────────────────────────────────────────────
+    sum:
+      desc: "Runs repomix with scoped output"
+      silent: true
+      cmds:
+        - repomix --output "{{.APP_NAME}}.xml" --include "{{.SUMEXT}}" --ignore "{{.IGNOREXT}}"
