@@ -57,7 +57,7 @@ func parseCliOptions() (*cliOptions, error) {
 		fmt.Println("  diagnose              Run diagnostic checks")
 	}
 
-	configPath := flags.String("config", "glance.yml", "Set config path")
+	configPath := flags.String("config", "banter.yml", "Set config path")
 	err := flags.Parse(os.Args[1:])
 	if err != nil {
 		return nil, err
