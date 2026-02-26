@@ -277,8 +277,8 @@ tasks:
       - echo "Go        : $(go version)"
 
   # ── CUSTOM ─────────────────────────────────────────────────────────
-    sum:
-      desc: "Runs repomix with scoped output"
-      silent: true
-      cmds:
-        - repomix --output "{{.APP_NAME}}.xml" --include "{{.SUMEXT}}" --ignore "{{.IGNOREXT}}"
+  sum:
+    desc: "Runs repomix with scoped output"
+    silent: true
+    cmds:
+      - repomix --output "{{.APP_NAME}}.xml" --include "{{.SUMEXT}}" --ignore "{{.IGNOREXT}}"
