@@ -10,7 +10,9 @@ pids
 *.pid.lock
 .secrets
 bin/
+docs/
 .task
+banter.xml
 
 # Logs & environment
 logs
