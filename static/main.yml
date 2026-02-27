@@ -1,0 +1,306 @@
+- name: home
+  head-widgets:
+  columns:
+    - size: small
+      widgets:
+        - type: bookmarks
+          title:  Frequent
+          groups:
+            - title: 
+              color: 10 70 50
+              hide-arrow: true
+              links:
+                - title: Github
+                  icon: si:github
+                  url: https://github.com/
+                  same-tab: false
+                - title: YouTube
+                  icon: si:youtube
+                  url: https://www.youtube.com/
+                  same-tab: false
+                - title: Reddit
+                  icon: si:reddit
+                  url: https://www.reddit.com/
+                  same-tab: false
+                - title: Amazon
+                  url: https://www.amazon.com/
+                  same-tab: false
+                  icon: si:shopify
+                - title: GCC
+                  url: https://console.cloud.google.com/vertex-ai/studio/
+                  icon: si:googlecloudstorage
+                  same-tab: false
+                - title: Store
+                  url: https://chromewebstore.google.com/category/extensions?hl=en-US
+                  same-tab: false
+                  icon: si:googlechrome
+            - title: 
+              color: 201 100 41
+              hide-arrow: true
+              links:
+                - title: Outlook
+                  icon: si:outline
+                  url: https://outlook.live.com/mail/0/
+                  same-tab: false
+                - title: Gmail
+                  url: https://mail.google.com/mail/u/0/
+                  same-tab: false
+                  icon: si:gmail
+                - title: Proton
+                  url: https://mail.proton.me/u/0/inbox
+                  same-tab: false
+                  icon: si:protonmail
+                - title: OpenBB
+                  icon: si:nodebb
+                  url: https://pro.openbb.co/app/
+                  same-tab: false
+                - title: Finviz
+                  icon: si:fi
+                  url: https://finviz.com/
+                  same-tab: false
+                - title: Yahoo
+                  icon: si:robinhood
+                  url: https://finance.yahoo.com/markets/
+                  same-tab: false
+                - title: Trading
+                  icon: si:tradingview
+                  url: https://www.tradingview.com/news-flow/
+                  same-tab: false
+            - title: 
+              color: 90 59 58
+              hide-arrow: true
+              links:
+                - title: JPMorgan
+                  icon: si:chase
+                  url: https://workspace.jpmchase.com/
+                  same-tab: false
+                - title: Gossett
+                  icon: si:googlehome
+                  url: https://thegossettnashville.securecafe.com/
+                  same-tab: false
+                - title: Caremark
+                  icon: si:quarto
+                  url: https://www.caremark.com/pharmacy/benefits/cmk-dashboard
+                  same-tab: false
+                - title: AT&T
+                  icon: si:atandt
+                  url: https://www.att.com/acctmgmt/overview
+                  same-tab: false
+                - title: NES
+                  icon: si:stackblitz
+                  url: https://myaccount.nespower.com/eportal/#/account
+                  same-tab: false
+            - title: 
+              hide-arrow: true
+              links:
+                - title: Iconify
+                  icon: si:iconify
+                  url: https://icon-sets.iconify.design/
+                  same-tab: false
+                - title: Simple
+                  icon: si:simpleicons
+                  url: https://simpleicons.org/
+                  same-tab: false
+                - title: Material
+                  icon: si:windows
+                  url: https://pictogrammers.com/library/mdi/
+                  same-tab: false
+                - title: NerdFonts
+                  icon: si:fontforge
+                  url: https://www.nerdfonts.com/cheat-sheet
+                  same-tab: false
+                - title: Mathaway
+                  icon: si:libreofficemath
+                  url: https://www.mathway.com/Algebra
+
+    - size: full
+      widgets:
+        - type: search
+          search-engine: google
+          autofocus: false
+          new-tab: false
+          placeholder: " "
+
+        - type: html
+          source: |
+            <div class="bookmarks-inline-rail">
+              <div class="bookmarks-box" style="display: flex;">
+                <div class="flex items-center gap-10">
+                  <img class="bookmarks-icon flat-icon" src="https://cdn.jsdelivr.net/npm/simple-icons@latest/icons/anthropic.svg" alt="" loading="lazy">
+                  <a href="https://claude.ai/projects" class="linkModel" target="_blank" rel="noreferrer">Anthropic</a>
+                </div>
+                <div class="flex items-center gap-10">
+                  <img class="bookmarks-icon flat-icon" src="https://cdn.jsdelivr.net/npm/simple-icons@latest/icons/googlegemini.svg" alt="" loading="lazy">
+                  <a href="https://aistudio.google.com/u/1/prompts/new_chat" class="linkModel" target="_blank" rel="noreferrer">Gemini</a>
+                </div>
+                <div class="flex items-center gap-10">
+                  <img class="bookmarks-icon flat-icon" src="https://cdn.jsdelivr.net/npm/simple-icons@latest/icons/sololearn.svg" alt="" loading="lazy">
+                  <a href="https://chatgpt.com/" class="linkModel" target="_blank" rel="noreferrer">Gpt</a>
+                </div>
+                <div class="flex items-center gap-10">
+                  <img class="bookmarks-icon flat-icon" src="https://cdn.jsdelivr.net/npm/simple-icons@latest/icons/docker.svg" alt="" loading="lazy">
+                  <a href="https://chat.deepseek.com/" class="linkModel" target="_blank" rel="noreferrer">Deepseek</a>
+                </div>
+                <div class="flex items-center gap-10">
+                  <img class="bookmarks-icon flat-icon" src="https://cdn.jsdelivr.net/npm/simple-icons@latest/icons/openrouter.svg" alt="" loading="lazy">
+                  <a href="https://openrouter.ai/models" class="linkModel" target="_blank" rel="noreferrer">Router</a>
+                </div>
+              </div>
+            </div>
+
+        - type: custom-api
+          method: GET
+          title: Quoterism
+          cache: 30m
+          url: https://quoterism.com/api/quotes/random
+          template: |
+            <div id="qapi"><p class="inline-flex size-h4 color-paragraph randyquote"><span id="quoteLogo">󱀡</span><em>{{ .JSON.String "text" }}</em></p></br><strong class="qauthor">{{ .JSON.String "author.name" }}</strong></div>
+
+        - type: rss
+          title:  News
+          style: detailed-list
+          card-height: 20
+          collapse-after: 6
+          feeds:
+            - url: https://rss.politico.com/politics-news.xml
+              title: POLITICO
+              # item-link-prefix: https://www.removepaywalls.com/search?url=
+            - url: http://rss.politico.com/economy.xml
+              title: POLITICO
+              # item-link-prefix: https://www.removepaywalls.com/search?url=
+            - url: http://rss.politico.com/defense.xml
+              title: POLITICO
+              # item-link-prefix: https://www.removepaywalls.com/search?url=
+            - url: http://rss.politico.com/congress.xml
+              title: POLITICO
+              # item-link-prefix: https://www.removepaywalls.com/search?url=
+            - url: https://moxie.foxbusiness.com/google-publisher/markets.xml
+              title: Fox Business
+              # item-link-prefix: https://www.removepaywalls.com/search?url=
+            - url: https://moxie.foxbusiness.com/google-publisher/technology.xml
+              title: Fox Business
+              # item-link-prefix: https://www.removepaywalls.com/search?url=
+            - url: https://www.ft.com/technology?format=rss
+              title: Financial Times
+              item-link-prefix: https://www.removepaywalls.com/search?url=
+            - url: https://feeds.a.dj.com/rss/RSSMarketsMain.xml
+              title: Wall Street Journal
+              item-link-prefix: https://www.removepaywalls.com/search?url=
+
+        # - type: videos
+        #   title:  Videos
+        #   cahce: 1h
+        #   style: grid-cards
+        #   collapse-after-rows: 1
+        #   channels:
+        #     - UCUyeluBRhGPCW4rPe_UvBZQ # PrimeTime
+        #     - UCHnyfMqiRRG1u-2MsSQLbXA # Veritasium
+        #     - UCbRP3c757lWg9M-U7TyEkXA # theo.t3
+        #     - UCsBjURrPoezykLs9EqgamOA # Fireship
+        #     - UCkoujZQZatbqy4KGcgjpVxQ # Shawn Ryan
+        #     - UCOT2iLov0V7Re7ku_3UBtcQ # Hank Green
+
+    - size: small
+      widgets:
+        - type: calendar
+          first-day-of-week: monday
+
+        - type: group
+          widgets:
+            - type: markets
+              title: Heavies
+              sort-by: change
+              chart-link-template: https://www.tradingview.com/chart/?symbol={SYMBOL}
+              symbol-link-template: https://finance.yahoo.com/quote/{SYMBOL}
+              markets:
+                - symbol: JPM
+                  name: JPMorgan
+                - symbol: GOOGL
+                  name: Google
+                - symbol: AAPL
+                  name: Apple
+                - symbol: MSFT
+                  name: Microsoft
+                - symbol: AMZN
+                  name: Amazon
+                - symbol: PLTR
+                  name: Palantir
+                - symbol: TSLA
+                  name: Tesla
+                - symbol: META
+                  name: Meta
+                - symbol: ORCL
+                  name: Oracle
+            - type: markets
+              title: Semies
+              sort-by: change
+              chart-link-template: https://www.tradingview.com/chart/?symbol={SYMBOL}
+              symbol-link-template: https://finance.yahoo.com/quote/{SYMBOL}
+              markets:
+                - symbol: NVDA
+                  name: NVIDIA
+                - symbol: TSM
+                  name: TSMC
+                - symbol: AMD
+                  name: AMD
+                - symbol: INTC
+                  name: Intel
+                - symbol: QCOM
+                  name: Qualcomm
+
+        - type: custom-api
+          title: Tailscale Devices
+          title-url: https://login.tailscale.com/admin/machines
+          url: https://api.tailscale.com/api/v2/tailnet/-/devices
+          headers:
+            Authorization: Bearer tskey-api-kh4t8iyw4611CNTRL-i783r6T5BvRftbG9vZ2zuRi1gxWczZUrg
+          cache: 10m
+          options:
+            collapseAfter: 4
+            disableOfflineIndicator: false
+            disableUpdateIndicator: true
+            prioritiseTags: false
+          template: |
+            <ul id="eleTails" class="list list-gap-10 collapsible-container" data-collapse-after="{{ .Options.IntOr "collapseAfter" 3 }}">
+              {{ range .JSON.Array "devices" }}
+              <li>
+                <div class="flex items-center gap-10">
+                  <div class="device-name-container-tailscale grow">
+                    <span class="size-h4 block text-truncate color-primary">
+                      {{ findMatch "^([^.]+)" (.String "name") }}
+                    </span>
+                    <div class="indicators-container-tailscale">
+                      {{ if and (not ($.Options.BoolOr "disableUpdateIndicator" false)) (.Bool "updateAvailable") }}
+                      <span class="update-indicator-tailscale" data-popover-type="text" data-popover-text="Update Available"></span>
+                      {{ end }}
+
+                      {{ if not ($.Options.BoolOr "disableOfflineIndicator" false) }}
+                      {{ $lastSeen := .String "lastSeen" | parseTime "rfc3339" }}
+                      {{ if not ($lastSeen.After (offsetNow "-10s")) }}
+                      {{ $lastSeenTimezoned := $lastSeen.In now.Location }}
+                      <span class="offline-indicator-tailscale" data-popover-type="text"
+                        data-popover-text="Offline - Last seen {{ $lastSeenTimezoned.Format " Jan 2 3:04pm" }}"></span>
+                      {{ end }}
+                      {{ end }}
+
+                    </div>
+                  </div>
+                </div>
+                <div class="device-info-container-tailscale">
+                  <ul class="list-horizontal-text device-info-tailscale">
+                    <li>{{ .String "os" }}</li>
+                    <li>
+                      {{ if and ($.Options.BoolOr "prioritiseTags" false) (.Exists "tags.0") }}
+                        {{ trimPrefix "tag:" (.String "tags.0") }}
+                      {{ else }}
+                        {{ .String "user" }}
+                      {{ end }}
+                    </li>
+                  </ul>
+                  <div class="device-ip-tailscale">
+                    {{ .String "addresses.0"}}
+                  </div>
+                </div>
+              </li>
+              {{ end }}
+            </ul>

@@ -1,0 +1,131 @@
+/* ============================================================================
+   CSS VARIABLES & ROOT CONFIGURATION
+   ============================================================================ */
+/* Rumble - chaotic vibration */
+
+:root {
+  --aniNav: bounce;
+  --aniNavTime: 450ms;
+  /* Typography */
+  /* font-size: 11px; */
+  --fontSans: Inter, "Symbols Nerd Font", sans-serif !important;
+  --fontAlt: Finder, "Symbols Nerd Font", sans-serif !important;
+  --fontPlay: Neco, "Symbols Nerd Font" !important;
+  /* Font Sizes */
+  --font-size-h1: 1.7rem;
+  --font-size-h2: 1.6rem;
+  --font-size-h3: 1.5rem;
+  --font-size-h4: 1.25rem;
+  --font-size-base: 1.3rem;
+  --font-size-h5: 1.2rem;
+  --font-size-h6: 1.1rem;
+  /* Background & Theme Variables */
+  --bgh: 216;
+  --bgs: 28%;
+  --bgl: 7%;
+  --bghs: var(--bgh), var(--bgs);
+  --cm: 1;
+  --tsm: 1;
+  --ths: var(--bgh), calc(var(--bgs) * var(--tsm));
+  /* Background & Images */
+  --bgImage: url("sf.jpg");
+  --bgWidget: #11121599;
+  --color-background: #141518;
+  --color-widget-background: #141518;
+  /* Colors */
+  --color-primary: hsl(39.38deg 22.33% 65.53% / 89%);
+  --color-positive: var(--color-primary);
+  --color-negative: hsl(0deg 38.01% 63.16%);
+  --color-text-highlight: hsl(var(--ths), calc(var(--scheme) var(--cm) * 85%));
+  --color-text-paragraph: hsl(var(--ths), calc(var(--scheme) var(--cm) * 73%));
+  --color-text-base: hsl(var(--ths), calc(var(--scheme) var(--cm) * 58%));
+  --color-text-base-muted: hsl(var(--ths), calc(var(--scheme) var(--cm) * 52%));
+  --color-text-subdue: hsl(var(--ths), calc(var(--scheme) var(--cm) * 35%));
+  --link-hover: #cdb47f;
+  /* Spacing & Layout */
+  --widget-gap: 23px;
+  /* STANDARD WIDGET PADDING VALUES */
+  --widget-content-vertical-padding: 1.8em;
+  --widget-content-horizontal-padding: 2em;
+  --widget-content-padding: var(--widget-content-vertical-padding)
+    var(--widget-content-horizontal-padding);
+  /* MINIATURE WIDGET PADDING VALUES */
+  --content-horizontal-half: calc(var(--widget-content-horizontal-padding) / 2);
+  --content-vertical-half: calc(var(--content-vertical-half) / 2);
+  --content-padding-half: var(--widget-content-vertical-half)
+    var(--content-horizontal-half);
+
+  --content-bounds-padding: 15px;
+  --mobile-navigation-height: 50px;
+  /* Border Radius */
+  --bdrRound: 15px;
+  --bdrMedium: 13px;
+  --bdrCurve: 9px;
+  --bdrSquare: 7px;
+  /* Effects */
+  --thru: rgba(0 0 0 0);
+  --premShadow: 0 2px 3px #00000012, 0 4px 12px #0000000d;
+  --nuShadow:
+    0 0 0 1px rgba(255, 255, 255, 0.03), 0 12px 28px rgba(0, 0, 0, 0.6);
+  --ioease: cubic-bezier(0.165, 0.85, 0.45, 1);
+  --aniMedium: all 290ms var(--ioease);
+  /* Base Glass */
+  --glassBg: linear-gradient(
+    135deg,
+    rgba(10, 10, 10, 0.75),
+    rgba(22, 22, 22, 0.85)
+  );
+  --glassBf: blur(10px) saturate(1.1);
+  --bgGrad: linear-gradient(135deg, #0a0a0a 0%, #101010 45%, #161616 100%);
+}
+
+.baseGradient {
+  background: linear-gradient(135deg, #0a0a0a 0%, #101010 45%, #161616 100%);
+}
+
+.baseDepth {
+  border-radius: var(--bdrRound);
+  box-shadow: var(--nuShadow);
+}
+
+.baseGlass {
+  background: linear-gradient(
+    135deg,
+    rgba(10, 10, 10, 0.75),
+    rgba(22, 22, 22, 0.85)
+  );
+  backdrop-filter: blur(10px) saturate(1.1);
+  -webkit-backdrop-filter: blur(10px) saturate(1.1);
+}
+
+/* ============================================================================
+    EARNINGS
+   ============================================================================ */
+
+.earn-box {
+  display: block;
+}
+
+.earn-title {
+  display: inline-flex;
+  color: var(--color-primary);
+  font-size: 0.92em;
+}
+
+.earn-link {
+  font-size: 0.7em;
+  border-radius: var(--bdrCurve);
+  padding: 3px 4px;
+  background: var(--color-background);
+  box-shadow: var(--nuShadow);
+}
+
+.earn-report {
+  font-size: 0.8em;
+  vertical-align: middle;
+  text-align: right;
+}
+
+.earn-time {
+  font-style: italic;
+}

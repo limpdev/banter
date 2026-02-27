@@ -1,5 +1,5 @@
 <div id="widget-{{ .GetID }}" class="widget widget-type-{{ .GetType }}{{ if .CSSClass }} {{ .CSSClass }}{{ end }}"
-    hx-get="/api/widgets/{{ .GetID }}/render" {{ .GetHTMXTrigger }} hx-swap="outerHTML">
+    hx-get="/api/widgets/{{ .GetID }}/render" {{ .GetHTMXTrigger }} hx-swap="outerHTML"> <!-- THIS IS THE FIX -->
     {{- if not .HideHeader }}
     <div class="widget-header">
         {{- if ne "" .TitleURL }}
@@ -24,14 +24,14 @@
             </svg>
         </div>
         {{- end }}
-        {{- if and .Error .ContentAvailable }}
+        <div class="widget-content{{ if .ContentAvailable }} {{ block "widget-content-classes" . }}{{ end }}{{ end }}">
         <div class="notice-icon notice-icon-major" title="{{ .Error }}"></div>
         {{- else if .Notice }}
         <div class="notice-icon notice-icon-minor" title="{{ .Notice }}"></div>
         {{- end }}
     </div>
     {{- end }}
-    <div class="widget-content{{ if .ContentAvailable }} {{ block " widget-content-classes" . }}{{ end }}{{ end }}">
+    <div class="widget-content{{ if .ContentAvailable }} {{ block "widget-content-classes" . }}{{ end }}{{ end }}">
         {{- if .ContentAvailable }}
         {{ block "widget-content" . }}{{ end }}
         {{- else }}

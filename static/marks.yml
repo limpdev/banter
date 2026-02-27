@@ -1,0 +1,434 @@
+- name: Marks
+  width: wide
+  columns:
+    # -----------------------------------------------------------
+    # LEFT COLUMN (Small / Fixed Width)
+    # -----------------------------------------------------------
+    - size: small
+      widgets:
+        - type: bookmarks
+          title: General
+          groups:
+            - title: Meta
+              links:
+                - title: Chrome Store
+                  url: https://chromewebstore.google.com/category/extensions?hl=en-US&authuser=1
+            - title: Calculators
+              links:
+                - title: Financial Calculator
+                  url: https://www.calculator.net/finance-calculator.html
+                - title: Black–Scholes
+                  url: https://goodcalculators.com/black-scholes-calculator/
+                - title: Omni Calculator
+                  url: https://www.omnicalculator.com/finance
+                - title: Video File Size
+                  url: https://www.omnicalculator.com/other/video-size
+                - title: eDPI Calculator
+                  url: https://gamingsmart.com/edpi-calculator/
+                - title: Aspect Ratio
+                  url: https://calculateaspectratio.com/
+            - title: Terminals & Shells
+              links:
+                - title: Alacritty Config
+                  url: https://alacritty.org/config-alacritty.html
+                - title: Base16 Alacritty
+                  url: https://github.com/aarowill/base16-alacritty/blob/master/colors/base16-eighties.toml
+                - title: WezTerm
+                  url: https://wezterm.org/config/lua/config/index.html
+                - title: Neovim
+                  url: https://neovim.io/doc/user/vimindex.html#ex-edit-index
+                - title: Zed
+                  url: https://zed.dev/docs/getting-started
+            - title: CLI Tools
+              links:
+                - title: urfave/cli
+                  url: https://cli.urfave.org/
+                - title: ImageMagick
+                  url: https://imagemagick.org/script/command-line-tools.php
+                - title: regex101
+                  url: https://regex101.com/library?search=&orderBy=MOST_UPVOTES
+            - title: Miscellaneous
+              links:
+                - title: Immediate Mode GUI
+                  url: https://eliasnaur.com/blog/immediate-mode-gui-programming
+                - title: Web Browser Eng.
+                  url: https://browser.engineering/
+                - title: Unicode Table
+                  url: https://symbl.cc/en/unicode-table/#number-forms
+                - title: Docsify
+                  url: https://docsify.js.org/#/more-pages
+                - title: SubtitleFrames
+                  url: https://subtitles.fframes.studio/
+                - title: Follow RSS
+                  url: https://app.follow.is/discover?type=rss3
+                - title: Wall Street Oasis
+                  url: https://www.wallstreetoasis.com/forum/asset-management
+                - title: TakeProfit
+                  url: https://takeprofit.com/platform
+                - title: Hiring Cafe
+                  url: https://hiring.cafe/
+                - title: Reddit
+                  url: https://new.reddit.com/
+
+    # -----------------------------------------------------------
+    # MIDDLE COLUMN (Dynamic Full Width with max-columns)
+    # -----------------------------------------------------------
+    - size: full
+      widgets:
+        - type: split-column
+          max-columns: 4
+          widgets:
+            - type: bookmarks
+
+              title: Data
+              groups:
+                - title: Finance
+
+                  links:
+                    - title: Alpha Vantage
+                      url: https://www.alphavantage.co/documentation/
+                    - title: Financial Modeling
+                      url: https://site.financialmodelingprep.com/developer/docs/dashboard
+                    - title: Financial Datasets
+                      url: https://www.financialdatasets.ai/
+                    - title: Twelve Data
+                      url: https://twelvedata.com/account/api-playground
+                    - title: Tradier
+                      url: https://tradier.com/
+                    - title: OpenBB
+                      url: https://docs.openbb.co/workspace/developers/data-integration
+                    - title: TradingView Widgets
+                      url: https://www.tradingview.com/widget-docs/widgets/
+                    - title: Statista
+                      url: https://www.statista.com/registration/personalization/completed
+                - title: General & Search
+
+                  links:
+                    - title: Exa
+                      url: https://dashboard.exa.ai/api-keys
+                    - title: Tavily
+                      url: https://app.tavily.com/home
+                    - title: Serpapi
+                      url: https://serpapi.com/dashboard
+                    - title: The News
+                      url: https://www.thenewsapi.com/documentation
+                    - title: New York Times
+                      url: https://developer.nytimes.com/my-apps/5dc38aab-40c5-4ad1-ba81-a384b238bfca
+                    - title: Rapid API
+                      url: https://rapidapi.com/search?sortBy=ByRelevance
+                    - title: API Ninjas
+                      url: https://api-ninjas.com/profile
+                    - title: Has Data
+                      url: https://app.hasdata.com/dashboard
+                    - title: Apy Hub
+                      url: https://apyhub.com/?ref=dr-pa&utm_medium=public-apis-repo-readme
+                    - title: REST Countries
+                      url: https://restcountries.com/
+                - title: Apps & Packages
+                  links:
+                    - title: Package Control
+                      url: https://packagecontrol.io/browse/popular
+                    - title: Raycast
+                      url: https://manual.raycast.com/
+                    - title: FileMaker Tools
+                      url: https://www.lopesoft.com/fmtools/help/enu/CustomCommand_RunProgram.html
+                    - title: NileShell
+                      url: https://nilesoft.org/docs/configuration/themes
+                    - title: pyload
+                      url: https://github.com/pyload/pyload/releases
+                    - title: yt-dlp
+                      url: https://github.com/yt-dlp/yt-dlp?tab=readme-ov-file#video-selection
+                - title: Tooling
+
+                  links:
+                    - title: LogoDev
+                      url: https://docs.logo.dev/introduction
+                    - title: Kanye-pi
+                      url: https://kanye.rest/
+                    - title: Quoterism
+                      url: https://www.quoterism.com/developer
+                    - title: Insomnia
+                      url: https://app.insomnia.rest/app/home
+                    - title: jqPlay
+                      url: https://play.jqlang.org/
+                    - title: HTTPkit
+                      url: https://httptoolkit.com/all-integrations/
+                    - title: Resty v3
+                      url: https://resty.dev/docs/upgrading-to-v3/
+
+            - type: bookmarks
+
+              title: AIML
+              groups:
+                - title: Models & APIs
+
+                  links:
+                    - title: Hugging Face
+                      url: https://huggingface.co/
+                    - title: Civitai
+                      url: https://developer.civitai.com/docs/api/public-rest
+                    - title: RunwayML
+                      url: https://app.runwayml.com/video-tools/teams/roosted/dashboard?tab=image-generate
+                    - title: ModelScope
+                      url: https://github.com/modelscope/modelscope
+                    - title: OpenModelDB
+                      url: https://openmodeldb.info/
+                - title: Generative Art
+                  links:
+                    - title: Lexica
+                      url: https://lexica.art/
+                    - title: TensorArt
+                      url: https://tensor.art/
+                    - title: OpenArt Workflows
+                      url: https://openart.ai/workflows/home
+                    - title: SeaArt
+                      url: https://www.seaart.ai/
+                    - title: Comfy Workflows
+                      url: https://comfyworkflows.com/
+                    - title: ComfyUI Registry
+                      url: https://registry.comfy.org/
+                    - title: Odyssey
+                      url: https://odysseyapp.io/download
+                    - title: LoRA Studio
+                      url: https://lorastudio.co/models
+                    - title: Kohya_ss
+                      url: https://rentry.org/ezlora
+                    - title: Posemaniacs
+                      url: https://www.posemaniacs.com/
+                    - title: Image to Prompt
+                      url: https://imagetoprompt.com/
+
+            - type: bookmarks
+
+              title: Development
+              groups:
+                - title: Frameworks & Tools
+
+                  links:
+                    - title: Astro
+                      url: https://astro.build/
+                    - title: Svelte Docs
+                      url: https://svelte.dev/playground/
+                    - title: Storybook
+                      url: https://storybook.js.org/docs/writing-docs/build-documentation#preview-storybooks-documentation
+                    - title: Task
+                      url: https://taskfile.dev/reference/templating/
+                    - title: Wails v2
+                      url: https://wails.io/docs/reference/runtime/intro
+                    - title: Wails v3
+                      url: https://v3alpha.wails.io/reference/overview/
+                    - title: Fyne
+                      url: https://docs.fyne.io/started/quick/
+                    - title: Gio Docs
+                      url: https://gioui.org/doc/learn
+                    - title: Electron Fiddle
+                      url: https://electronjs.org/fiddle
+                    - title: Buffalo
+                      url: https://gobuffalo.io/documentation/
+                - title: Learning
+                  links:
+                    - title: Kaggle
+                      url: https://www.kaggle.com/
+                    - title: Zero to Mastery
+                      url: https://zerotomastery.io/
+                    - title: The Odin Project
+                      url: https://www.theodinproject.com/
+                - title: Format Convert
+                  links:
+                    - title: PNG to CUR
+                      url: https://convertio.co/png-cur/
+                    - title: ICO to SVG
+                      url: https://www.freeconvert.com/ico-to-svg
+                    - title: AConvert
+                      url: https://www.aconvert.com/image/
+                    - title: BIRME Resize
+                      url: https://www.birme.net/?target_width=512&target_height=512
+
+            - type: bookmarks
+
+              title: Design
+              groups:
+                - title: Icons & Logos
+
+                  links:
+                    - title: Iconify
+                      url: https://icon-sets.iconify.design/
+                    - title: FaviGen
+                      url: https://realfavicongenerator.net/
+                    - title: Flat Icon
+                      url: https://www.flaticon.com/
+                    - title: Simple Icons
+                      url: https://simpleicons.org/
+                    - title: Iconfinder
+                      url: https://www.iconfinder.com/
+                    - title: macOS Icons
+                      url: https://macosicons.com/#/
+                    - title: Icons8
+                      url: https://icons8.com/icons
+                    - title: Brand Logos
+                      url: https://brandlogos.net/
+                    - title: Nerd Fonts
+                      url: https://github.com/ryanoasis/nerd-fonts#font-patcher
+                - title: Colors & Styles
+                  links:
+                    - title: Color Palettes
+                      url: https://www.color-hex.com/color-palettes/popular.php
+                    - title: Colors.tools
+                      url: https://www.colors.tools/color-tones/?currentColor=09090a&currentColorMixed=33959e&currentSteps=20&currentHarmony=180&currentHarmonyDominance=50,50,50,50
+                    - title: CSS Portal
+                      url: https://www.cssportal.com/
+                    - title: W3Schools RGB
+                      url: https://www.w3schools.com/colors/colors_rgb.asp
+                    - title: Animate.css
+                      url: https://animate.style/
+                    - title: cdnjs
+                      url: https://cdnjs.com/libraries
+                    - title: jsDelivr
+                      url: https://www.jsdelivr.com/tools/purge
+                    - title: Terminal Themes
+                      url: https://terminal-themes.com/
+                    - title: Oh My Posh
+                      url: https://ohmyposh.dev/docs/
+                    - title: Transparent Textures
+                      url: https://www.transparenttextures.com/
+                - title: Images & Audio
+                  links:
+                    - title: Unsplash
+                      url: https://unsplash.com/
+                    - title: Pexels
+                      url: https://www.pexels.com/
+                    - title: Pixabay
+                      url: https://pixabay.com/sound-effects/search/click/?pagi=5
+                    - title: Freesound
+                      url: https://freesound.org/
+                    - title: DeviantArt
+                      url: https://www.deviantart.com/
+
+        - type: split-column
+          max-columns: 3
+          widgets:
+            - type: bookmarks
+              title: Downloads
+              groups:
+                - title: Torrland
+
+                  links:
+                    - title: RuTracker
+                      url: https://rutracker.org/forum/index.php
+                    - title: Milkie
+                      url: https://milkie.cc/browse
+                    - title: SpeedApp
+                      url: https://speedapp.io/
+                    - title: Speed.cd
+                      url: https://speed.cd/
+                    - title: VSTorrent
+                      url: https://vstorrent.org/
+                    - title: Warez BB
+                      url: https://forum.dirtywarez.com/forums/applications.96/
+                    - title: Digital Core
+                      url: https://digitalcore.club/
+                    - title: MacBed
+                      url: https://www.macbed.com/apps/developer-tools/page/2/
+                    - title: AppsTorrent
+                      url: https://appstorrent.ru/
+                - title: Direct Download
+                  links:
+                    - title: Diakov
+                      url: https://diakov.net/
+                    - title: Repack.me
+                      url: https://repack.me/
+                    - title: RSLoad
+                      url: https://rsload.net/
+                    - title: Nsane Forums
+                      url: https://nsaneforums.com/
+                    - title: Soft98
+                      url: https://soft98.ir/
+                    - title: FileCR
+                      url: https://filecr.com/macos/?id=386009226126
+                    - title: CyberMania
+                      url: https://www.cybermania.ws/
+                - title: Search & DBs
+                  links:
+                    - title: BitSearch
+                      url: https://www.bitsearch.to/
+                    - title: MagnetDL
+                      url: https://www.magnetdl.com/
+                    - title: AIO Search
+                      url: https://www.aiosearch.com/
+                    - title: Ripped Guide
+                      url: https://ripped.guide/
+                    - title: Anna's Archive
+                      url: https://annas-archive.org/
+
+    # -----------------------------------------------------------
+    # RIGHT COLUMN (Small / Fixed Width)
+    # -----------------------------------------------------------
+    - size: small
+      widgets:
+        - type: bookmarks
+          title: Local
+          groups:
+            - title: Apps
+              links:
+                - title: Obsidian Docs
+                  url: https://help.obsidian.md/
+                - title: Directory Opus
+                  url: https://docs.dopus.com/doku.php?id=introduction
+                - title: Modular
+                  url: https://www.modular.com/
+                - title: Tailscale
+                  url: https://login.tailscale.com/admin/
+                - title: Open WebUI
+                  url: https://openwebui.com/
+            - title: Local Docs
+              links:
+                - title: Glance Docs
+                  url: file:///Users/andrewgorbet/mybin/proj/exec/_binaries/glance/aio.md
+                - title: Rust Interactive
+                  url: file:///C:/Users/drewg/proj/rust/book/book/index.html
+                - title: Rust by Example
+                  url: file:///C:/Users/drewg/proj/rust/rust-by-example/book/index.html
+                - title: Algorithms
+                  url: file:///C:/Users/drewg/proj/markdown/mags/Algorithms/book/contents/navigation/toc.html
+
+        - type: bookmarks
+          title: Shopping
+          groups:
+            - title: Home & PC Parts
+              links:
+                - title: Pottery Barn Lamps
+                  url: https://www.potterybarn.com/products/clenray-metal-task-table-lamp-mp/
+                - title: Wayfair
+                  url: https://www.wayfair.com/
+                - title: IKEA
+                  url: https://www.ikea.com/us/en/cat/products-products/
+                - title: West Elm
+                  url: https://www.westelm.com/
+                - title: PC Part Picker
+                  url: https://pcpartpicker.com/list/
+                - title: Corsair iCUE
+                  url: https://www.amazon.com/Corsair-LT100-Smart-Lighting-Starter/dp/B089QWBHB3
+                - title: CableMod
+                  url: https://store.cablemod.com/cart/
+                - title: dbrand
+                  url: https://dbrand.com/cart
+            - title: Fashion & Travel
+              links:
+                - title: SuitSupply
+                  url: https://suitsupply.com/en-us/men/suits
+                - title: DU/ER Trousers
+                  url: https://shopduer.com/collections/mens/products/mens-nustretch-relaxed-trouser-navy
+                - title: Chubbies
+                  url: https://www.chubbiesshorts.com/products/the-vannas-5-5-flat-front
+                - title: Moonshine Spirit
+                  url: https://www.bootbarn.com/moonshine-spirit-mens-rock-city-fuscus-caiman-western-boots---snip-toe/
+                - title: KingsLoot
+                  url: https://kingsloot.com/
+                - title: Longines
+                  url: https://www.longines.com/en-us/watch-the-longines-master-collection-l2-409-4-97-6
+                - title: Penhaligon's
+                  url: https://www.penhaligons.com/us/en/categories/fragrances/gents
+                - title: Travelpro
+                  url: https://travelpro.com/products/maxlite%C2%AE-air-compact-carry-on-hardside-spinner
+                - title: Segway Ninebot
+                  url: https://store.segway.com/ninebot-kickscooter-max-g2

@@ -1,0 +1,29 @@
+/* 1. Target widgets that are actively fetching data via HTMX */
+.widget.htmx-request {
+    opacity: 0.6;
+    pointer-events: none; /* Prevent double-clicks while loading */
+    transition: opacity 290ms var(--ioease);
+}
+
+/* 2. Target the exact moment HTMX swaps the DOM content */
+.widget.htmx-swapping {
+    opacity: 0;
+    transition: opacity 100ms var(--ioease);
+}
+
+/* 3. Target the element right after the DOM has updated */
+/* .widget.htmx-settling { */
+    /* Useful for applying enter animations */
+/* } */
+
+/* Target the HTMX widget container specifically */
+.widget[hx-get] {
+    position: relative;
+    background: var(--thru);
+    /* Add any custom Banter styling here */
+}
+
+/* Example: Add a subtle loading cursor when hovering an HTMX enabled widget */
+.widget[hx-get].htmx-request {
+    cursor: wait;
+}

@@ -3,7 +3,7 @@ version: "3"
 
 vars:
   # ── Binary name ──────────────────────────────────────────────────────────
-  APP_NAME: "Banter"
+  APP_NAME: "banter"
   GOOS:
     sh: go env GOOS
   GOARCH:

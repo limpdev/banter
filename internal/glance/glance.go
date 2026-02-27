@@ -216,7 +216,7 @@ func newApplication(c *config) (*application, error) {
 	)
 
 	if config.Branding.AppName == "" {
-		config.Branding.AppName = "Glance"
+		config.Branding.AppName = "Banter"
 	}
 
 	if config.Branding.AppIconURL == "" {
