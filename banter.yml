@@ -1,7 +1,8 @@
 server:
   host: 0.0.0.0
   port: 8999
-  assets-path: C:\\Users\\drewg\\bin\\exe\\banter\\static\\assets
+  assets-path: /Users/andrewgorbet/mybin/proj/exec/banter/static/assets
+  # assets-path: C:\\Users\\drewg\\bin\\exe\\banter\\static\\assets
 branding:
   logo-url: /assets/raspberry.png
   favicon-url: /assets/raspberry.png
@@ -11,5 +12,5 @@ theme:
   custom-css-file: /assets/style.css
 
 pages:
-  - $include: /static/main.yml
-  - $include: /static/marks.yml
+  - $include: main.yml
+  - $include: marks.yml
