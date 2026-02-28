@@ -1,8 +1,8 @@
 server:
   host: 0.0.0.0
   port: 8999
-  # assets-path: /Users/andrewgorbet/mybin/proj/exec/banter/static/assets
-  assets-path: C:\\Users\\drewg\\bin\\exe\\banter\\static\\assets
+  assets-path: /Users/andrewgorbet/mybin/proj/exec/banter/static/assets
+  # assets-path: C:\\Users\\drewg\\bin\\exe\\banter\\static\\assets
 branding:
   logo-url: /assets/raspberry.png
   favicon-url: /assets/raspberry.png
@@ -14,3 +14,10 @@ theme:
 pages:
   - $include: main.yml
   - $include: marks.yml
+
+#  Authentication 
+auth:
+  secret-key: 0tVP0WNh0u4MEZ6wb8rhmB8XDCKaiC4ztQAg2GTuRGUQEQKey5kyJ89eOMwuFa4/4JdMJ3XsPI8q33BJ9mW/XA==
+  users:
+    admin:
+      password: 7114

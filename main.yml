@@ -249,11 +249,11 @@
                   name: Qualcomm
 
         - type: custom-api
-          title: Tailscale Devices
+          title: Tails
           title-url: https://login.tailscale.com/admin/machines
           url: https://api.tailscale.com/api/v2/tailnet/-/devices
           headers:
-            Authorization: Bearer {{.TAILSCALE_API}}
+            Authorization: Bearer ${TAILSCALE_API}
           cache: 10m
           options:
             collapseAfter: 4

@@ -42,7 +42,11 @@ a.size-h3 {
   transition: all 230ms var(--ioease);
 }
 a.bookmarks-link:hover {
-  background: linear-gradient(135deg, rgba(190, 190, 190, 0.3) 0%, rgba(190, 190, 190, 0.1) 100%);
+  background: linear-gradient(
+    135deg,
+    rgba(190, 190, 190, 0.3) 0%,
+    rgba(190, 190, 190, 0.1) 100%
+  );
   border: 1px solid #ffd86c80;
 }
 a.bookmarks-link:hover,
@@ -70,7 +74,8 @@ a.size-h3:active {
   transition: all 230ms var(--ioease);
 }
 
-.bookmarks-group:has(.bookmarks-group-title.size-h3) .bookmarks-group-title.size-h3 {
+.bookmarks-group:has(.bookmarks-group-title.size-h3)
+  .bookmarks-group-title.size-h3 {
   font-size: small;
   font-variant: petite-caps;
 }
@@ -145,7 +150,12 @@ a.size-title-dynamic.size-title-dynamic:hover {
   opacity: 0;
 }
 
-.widget-type-markets .widget-content .dynamic-columns .flex .min-width-0 a.color-highlight.size-h3.text-truncate {
+.widget-type-markets
+  .widget-content
+  .dynamic-columns
+  .flex
+  .min-width-0
+  a.color-highlight.size-h3.text-truncate {
   color: #6f94cbe1;
   letter-spacing: 0.2px;
 }
@@ -167,13 +177,24 @@ a.size-title-dynamic.size-title-dynamic:hover {
 .bookmarks-box {
   display: inline-flex;
   flex-wrap: wrap;
-  gap: 0.5rem 1.5rem;
+  gap: 0.5rem 1rem;
   align-items: center;
   justify-self: center;
   padding: 1em;
   border-radius: var(--bdrRound);
   background: var(--glassBg);
   backdrop-filter: var(--glassBf);
+}
+
+@media (max-width: 1300px) {
+  .bookmarks-box {
+    display: grid;
+    grid-template-columns: repeat(3, auto);
+    justify-content: center;
+    justify-items: center;
+    row-gap: 0.5rem;
+    column-gap: 1.5rem;
+  }
 }
 
 .linkModel {
@@ -190,7 +211,12 @@ a.size-title-dynamic.size-title-dynamic:hover {
 }
 .linkModel:hover {
   border: 1px solid #cdb47faa;
-  background: linear-gradient(135deg, #0a0a0acc 0%, #101010cc 45%, #161616cc 100%);
+  background: linear-gradient(
+    135deg,
+    #0a0a0acc 0%,
+    #101010cc 45%,
+    #161616cc 100%
+  );
   transform: translateY(-2px);
 }
 

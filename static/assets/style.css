@@ -525,7 +525,7 @@ p.randyquote {
 }
 
 span#quoteLogo {
-  display: inline-flex;
+  display: none;
   font-size: large;
   padding-right: 0.33em;
   padding-bottom: 0.33em;
