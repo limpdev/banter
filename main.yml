@@ -253,7 +253,7 @@
           title-url: https://login.tailscale.com/admin/machines
           url: https://api.tailscale.com/api/v2/tailnet/-/devices
           headers:
-            Authorization: Bearer tskey-api-kh4t8iyw4611CNTRL-i783r6T5BvRftbG9vZ2zuRi1gxWczZUrg
+            Authorization: Bearer {{.TAILSCALE_API}}
           cache: 10m
           options:
             collapseAfter: 4
